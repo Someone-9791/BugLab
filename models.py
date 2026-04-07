@@ -91,6 +91,14 @@ class DebugObservation(BaseModel):
         "",
         description="Human-readable summary of test failures/errors. Session 8 rich observations."
     )
+    hint: Optional[str] = Field(
+        None,
+        description="Common mistake hint based on bug category (PRIORITY 2.5)"
+    )
+    error_details: Optional[dict] = Field(
+        None,
+        description="Detailed error information with test failures breakdown (PRIORITY 2.7)"
+    )
     attempt: int = Field(
         0,
         description="Current attempt number (0 on reset, 1-3 after steps)"
@@ -104,7 +112,7 @@ class DebugObservation(BaseModel):
         description="Whether the episode is complete. True after step(), False on reset()"
     )
     
-    @field_serializer('reward', 'done', 'test_score', 'llm_score', 'quality_score', 'attempt', 'max_attempts', 'task_id', 'task_name', 'improvement', 'improvement_bonus', 'test_details', 'error_summary', 'quality_feedback', when_used='always')
+    @field_serializer('reward', 'done', 'test_score', 'llm_score', 'quality_score', 'attempt', 'max_attempts', 'task_id', 'task_name', 'improvement', 'improvement_bonus', 'test_details', 'error_summary', 'quality_feedback', 'hint', 'error_details', when_used='always')
     def serialize_always(self, value):
         """Force serialization of all result fields even when they're defaults."""
         return value

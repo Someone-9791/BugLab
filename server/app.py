@@ -4,6 +4,7 @@ FastAPI application factory for BugLab.
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from openenv.core import create_app
 from server.environment import PythonDebugEnvironment
 from models import DebugAction, DebugObservation
@@ -23,6 +24,19 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# PRIORITY 1.2: Add validation error handler for malformed JSON
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    """Handle malformed JSON requests with helpful error message."""
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": "Invalid action format",
+            "details": "Request must contain 'fixed_code' field with valid Python code",
+            "example": {"fixed_code": "def foo():\n    return 42"}
+        }
+    )
 
 # Add root endpoint for HuggingFace Spaces compatibility
 @app.get("/")

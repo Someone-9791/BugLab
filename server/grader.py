@@ -197,99 +197,10 @@ print(json.dumps(output))
         if tmp_path and os.path.exists(tmp_path):
             try:
                 os.unlink(tmp_path)
-            except:
-                pass
-
-
-def call_llm_judge(buggy_code: str, fixed_code: str) -> float:
-    """
-    Call LLM judge to score code quality.
-    
-    Args:
-        buggy_code: The original broken code
-        fixed_code: The student's fix attempt
-    
-    Returns:
-        float: Quality score from 0.0 to 1.0 (0.5 on any error)
-    
-    Notes:
-        - Uses HuggingFace Inference API with Qwen2.5-Coder-7B
-        - Returns 0.5 (neutral) on any error to avoid crashing environment
-        - Parses JSON response for score
-    """
-    # If no token, return neutral score
-    if not HF_TOKEN:
-        return 0.5
-    
-    try:
-        # Format prompt
-        prompt = JUDGE_PROMPT.format(
-            buggy_code=buggy_code.strip(),
-            fixed_code=fixed_code.strip()
-        )
-        
-        # Call HuggingFace Inference API
-        response = requests.post(
-            HF_API_URL,
-            headers={"Authorization": f"Bearer {HF_TOKEN}"},
-            json={
-                "inputs": prompt,
-                "parameters": {
-                    "max_new_tokens": 150,
-                    "temperature": 0.1,
-                    "return_full_text": False
-                }
-            },
-            timeout=30
-        )
-        
-        # Check response status
-        if response.status_code != 200:
-            return 0.5  # neutral fallback
-        
-        # Parse response
-        response_data = response.json()
-        
-        # Handle different response formats
-        if isinstance(response_data, list) and len(response_data) > 0:
-            output = response_data[0].get("generated_text", "")
-        elif isinstance(response_data, dict):
-            output = response_data.get("generated_text", "")
-        else:
-            return 0.5
-        
-        # Extract JSON from response
-        # Look for JSON object in the output
-        start = output.find('{')
-        end = output.rfind('}') + 1
-        
-        if start == -1 or end == 0:
-            return 0.5
-        
-        json_str = output[start:end]
-        data = json.loads(json_str)
-        
-        # Extract score
-        score = float(data.get("score", 0.5))
-        
-        # Clamp to valid range [0, 1]
-        return max(0.0, min(1.0, score))
-    
-    except requests.exceptions.Timeout:
-        # API timeout
-        return 0.5
-    
-    except requests.exceptions.RequestException:
-        # Network error
-        return 0.5
-    
-    except (json.JSONDecodeError, ValueError, KeyError):
-        # JSON parsing error
-        return 0.5
-    
-    except Exception:
-        # Any other error - never crash the environment
-        return 0.5
+            except OSError as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to clean temp file {tmp_path}: {e}")
 
 
 def analyze_code_quality(fixed_code: str) -> tuple[float, dict]:
@@ -342,18 +253,23 @@ def analyze_code_quality(fixed_code: str) -> tuple[float, dict]:
         used_vars = set()
         
         class VarVisitor(ast.NodeVisitor):
+            """AST visitor to detect unused variables and track variable definitions."""
+            
             def visit_Assign(self, node):
+                """Track variable assignments."""
                 for target in node.targets:
                     if isinstance(target, ast.Name):
                         defined_vars.add(target.id)
                 self.generic_visit(node)
             
             def visit_Name(self, node):
+                """Track variable usage."""
                 if isinstance(node.ctx, ast.Load):
                     used_vars.add(node.id)
                 self.generic_visit(node)
             
             def visit_For(self, node):
+                """Track loop variable definitions."""
                 if isinstance(node.target, ast.Name):
                     defined_vars.add(node.target.id)
                 self.generic_visit(node)

@@ -3,11 +3,49 @@ BugLab Environment - OpenEnv environment for debugging Python code.
 """
 
 import random
+import re
+import uuid
+import logging
 from typing import Any, Optional
 from openenv.core import Environment
 from models import DebugAction, DebugObservation, DebugState
 from server.grader import run_tests_sandboxed, compute_reward
 from bug_bank import PROBLEMS
+
+logger = logging.getLogger(__name__)
+
+# Common mistake hints for agents (PRIORITY 2)
+CATEGORY_HINTS = {
+    "logic_error": "Check comparison operators (>, <, >=, <=, ==, !=) - are they correct?",
+    "off_by_one": "Check loop ranges and boundary conditions - should be n, n+1, or n-1?",
+    "wrong_return": "Are you returning the correct variable? Check function return statements.",
+    "type_error": "Check type conversions - do you need str(), int(), float(), list()?",
+    "recursion_error": "Check recursion base case - does it stop? Check return statement.",
+    "missing_edge_case": "Handle edge cases: empty lists, None values, negative numbers?",
+    "variable_shadowing": "Check variable names - are inner/outer variables conflicting?",
+}
+
+
+def validate_episode_id(episode_id: str) -> str:
+    """
+    Validate episode ID format (PRIORITY 2).
+    
+    Args:
+        episode_id: Episode identifier to validate
+        
+    Returns:
+        str: Validated episode ID
+        
+    Raises:
+        ValueError: If episode ID is invalid
+    """
+    if not episode_id:
+        return None
+    if len(episode_id) > 100:
+        raise ValueError("Episode ID too long (max 100 characters)")
+    if not re.match(r'^[a-zA-Z0-9_\-]+$', episode_id):
+        raise ValueError("Episode ID contains invalid characters (allowed: alphanumeric, dash, underscore)")
+    return episode_id
 
 
 # Explicit Task Abstraction Layer (Session 8 Improvement)
@@ -65,8 +103,8 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
         1. reset() returns a buggy code problem
         2. Agent submits fixed code via step(action)
         3. Environment grades using dual reward:
-           - 60% automated test pass rate
-           - 40% LLM code quality score
+           - 70% automated test pass rate
+           - 30% code quality score
         4. Episode ends (single-turn environment)
     
     Attributes:
@@ -76,51 +114,16 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
         step_count: Number of steps taken in current episode
     """
     
-    # Global state for the environment (shared across instances)
-    # This is necessary because OpenEnv creates new instances per request
-    _global_problem = None
-    _global_episode_id = None
-    _global_attempt_count = 0
-    _global_previous_score = 0.0  # Session 8: Track for reward shaping
-    
     def __init__(self):
-        """Initialize the environment with problem bank."""
+        """Initialize the environment with problem bank (instance state, not class state)."""
         super().__init__()
         self.problems = PROBLEMS
-        # Use class variables for state persistence across requests
+        # PRIORITY 1.1: Convert to instance state for thread-safety
+        self.current_problem = None
+        self.current_episode_id = None
+        self.current_attempt_count = 0
+        self.current_previous_score = 0.0
         self._step_count = 0
-    
-    @property
-    def current_problem(self):
-        return PythonDebugEnvironment._global_problem
-    
-    @current_problem.setter
-    def current_problem(self, value):
-        PythonDebugEnvironment._global_problem = value
-    
-    @property
-    def _episode_id(self):
-        return PythonDebugEnvironment._global_episode_id
-    
-    @_episode_id.setter
-    def _episode_id(self, value):
-        PythonDebugEnvironment._global_episode_id = value
-    
-    @property
-    def _attempt_count(self):
-        return PythonDebugEnvironment._global_attempt_count
-    
-    @_attempt_count.setter
-    def _attempt_count(self, value):
-        PythonDebugEnvironment._global_attempt_count = value
-    
-    @property
-    def _previous_score(self):
-        return PythonDebugEnvironment._global_previous_score
-    
-    @_previous_score.setter
-    def _previous_score(self, value):
-        PythonDebugEnvironment._global_previous_score = value
     
     def reset(
         self,
@@ -171,9 +174,14 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
         
         # Reset episode state
         self._step_count = 0
-        self._attempt_count = 0  # Reset attempt count for new episode
-        self._previous_score = 0.0  # Session 8: Reset score tracking for reward shaping
-        self._episode_id = episode_id or f"ep_{random.randint(10000, 99999)}"
+        self.current_attempt_count = 0
+        self.current_previous_score = 0.0
+        # PRIORITY 2.8: Validate episode_id format
+        try:
+            self.current_episode_id = validate_episode_id(episode_id) if episode_id else f"ep_{uuid.uuid4().hex[:8]}"
+        except ValueError as e:
+            logger.warning(f"Invalid episode_id provided: {e}, generating new one")
+            self.current_episode_id = f"ep_{uuid.uuid4().hex[:8]}"
         
         # Return observation
         return DebugObservation(
@@ -213,7 +221,7 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
             DebugObservation with reward, done flag, and attempt tracking
         """
         self._step_count += 1
-        self._attempt_count += 1
+        self.current_attempt_count += 1
         problem = self.current_problem
         
         # Compute dual reward signals
@@ -229,25 +237,28 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
         from server.grader import analyze_code_quality
         quality_score, quality_feedback = analyze_code_quality(action.fixed_code)
         
-        # Combine into final reward: 70% tests + 30% quality
+        # PRIORITY 2.6: Partial credit system - award points for passing tests
+        # Base reward: 70% test score (now partial credit) + 30% quality
         base_reward = 0.7 * test_score + 0.3 * quality_score
         
         # Session 8: Reward shaping - add improvement bonus
-        improvement = base_reward - self._previous_score
+        improvement = base_reward - self.current_previous_score
         improvement_bonus = 0.0
         
-        if improvement > 0.0:
-            # 50% bonus for any improvement
-            improvement_bonus = improvement * 0.5
-            # Significant improvement bonus (>0.1 improvement)
-            if improvement > 0.1:
-                improvement_bonus += 0.1
+        # PRIORITY 2.6: Only apply improvement bonus if base_reward > 0
+        if base_reward > 0.0:
+            if improvement > 0.0:
+                # Smaller bonus for improvement (50% of improvement)
+                improvement_bonus = improvement * 0.5
+                # Significant improvement bonus (>0.1 improvement)
+                if improvement > 0.1:
+                    improvement_bonus += 0.05
         
         # Final reward with improvement bonus, clamped to [0, 1]
         reward = min(1.0, base_reward + improvement_bonus)
         
         # Store current score for next attempt
-        self._previous_score = base_reward
+        self.current_previous_score = base_reward
         
         # Session 8: Rich Observations - build error summary from test details
         failed_tests = [t for t in test_details if t.get("status") == "fail"]
@@ -255,6 +266,13 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
         failed_count = len(failed_tests) + len(error_tests)
         
         error_summary = ""
+        # PRIORITY 2.7: Enhanced error messages - detailed error info
+        error_details = {
+            "test_failures": [],
+            "total_tests": len(problem["test_cases"]),
+            "passed_tests": sum(1 for t in test_details if t.get("status") == "pass")
+        }
+        
         if failed_count > 0:
             if failed_tests:
                 # Summarize first failed test
@@ -265,11 +283,30 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
                 first_error = error_tests[0]
                 error_msg = first_error.get("error", "Unknown error")
                 error_summary = f"Error: {error_msg}" if not error_summary else error_summary + f" | {error_msg}"
+            
+            # Build detailed error info
+            for i, tc in enumerate(problem["test_cases"]):
+                if i < len(test_details):
+                    result = test_details[i]
+                    if result.get("status") in ("fail", "error"):
+                        error_details["test_failures"].append({
+                            "test_number": i + 1,
+                            "input": tc.get("input"),
+                            "expected": tc.get("expected"),
+                            "got": result.get("actual"),
+                            "error": result.get("error", "Assertion failed")
+                        })
         
         # Multi-step logic:
         # - Episode ends if score is excellent (>= 0.95) OR we've used all 3 attempts
         # - Otherwise, agent can keep trying
-        done = (self._attempt_count >= 3) or (reward >= 0.95)
+        done = (self.current_attempt_count >= 3) or (reward >= 0.95)
+        
+        # PRIORITY 2.5: Add common mistake hints when answer is wrong
+        hint = ""
+        if reward < 1.0:
+            category = problem.get("category", "unknown")
+            hint = CATEGORY_HINTS.get(category, "Review your logic carefully")
         
         # Create observation - return same problem for next attempt if not done
         next_obs = DebugObservation(
@@ -285,7 +322,7 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
             test_score=test_score,
             quality_score=quality_score,
             quality_feedback=quality_feedback,  # Add detailed feedback
-            attempt=self._attempt_count,
+            attempt=self.current_attempt_count,
             max_attempts=3,
             done=done,
             improvement=improvement,
@@ -293,6 +330,10 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
             test_details=test_details,  # Session 8: Rich observations
             error_summary=error_summary  # Session 8: Rich observations
         )
+        
+        # Add hint field if not present, and error_details
+        next_obs.hint = hint
+        next_obs.error_details = error_details
         
         return next_obs
     
@@ -305,7 +346,7 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
             DebugState with episode_id, step_count, and current problem
         """
         return DebugState(
-            episode_id=self._episode_id,
+            episode_id=self.current_episode_id,
             step_count=self._step_count,
             current_problem_id=self.current_problem["id"] if self.current_problem else None
         )
