@@ -173,10 +173,7 @@ PROBLEMS = [
         count += 1
     return s""",
         "fixed_code": """def string_length(s):
-    count = 0
-    for char in s:
-        count += 1
-    return count""",
+    return len(s)""",
         "test_cases": [
             {"input": ["hello"], "expected": 5},
             {"input": [""], "expected": 0},
