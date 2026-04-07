@@ -254,10 +254,10 @@ See COMPLIANCE_AND_REQUIREMENTS.md for final verification.
 
 ---
 
-## ⚠️ Critical Constraints
+⚠️ **Critical Constraints**
 
 1. **Never use eval()/exec()** - Always subprocess with timeout
-2. **8GB RAM limit** - Use HF Inference API, not local models
+2. **8GB RAM limit** - Use HuggingFace Router API for inference
 3. **numpy 1.26.4 locked** - Do not upgrade (ROCm compatibility)
 4. **HF_TOKEN in .env** - Never hardcode in source
 5. **Port 8000** - OpenEnv standard for Docker
