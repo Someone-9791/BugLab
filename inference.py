@@ -106,7 +106,6 @@ async def connect_with_retry(env_url: str, max_retries: int = 3, initial_delay: 
             if attempt == max_retries - 1:
                 raise RuntimeError(f"Failed to connect to {env_url} after {max_retries} attempts: {e}")
             delay = initial_delay * (2 ** attempt)
-            print(f"[DEBUG] Connection failed, retrying in {delay}s... ({attempt+1}/{max_retries})", flush=True)
             await asyncio.sleep(delay)
 
 

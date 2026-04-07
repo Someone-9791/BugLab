@@ -68,16 +68,6 @@ def step_env(fixed_code: str):
         attempt = obs.attempt
         max_attempts = obs.max_attempts
         
-        # DEBUG: Log what we're getting
-        print(f"[DEBUG] step_env() results:", flush=True)
-        print(f"  quality_feedback type: {type(quality_feedback)}", flush=True)
-        print(f"  quality_feedback is None: {quality_feedback is None}", flush=True)
-        print(f"  quality_feedback bool: {bool(quality_feedback)}", flush=True)
-        if quality_feedback:
-            print(f"  quality_feedback keys: {list(quality_feedback.keys())}", flush=True)
-        print(f"  quality_score: {quality_score}", flush=True)
-        print(f"  test_score: {test_score}", flush=True)
-        print(f"  reward: {reward}", flush=True)
         
         # Create user-friendly feedback
         test_percent = int(test_score * 100)
@@ -132,30 +122,12 @@ def step_env(fixed_code: str):
 """
         
         # Add detailed quality feedback if available
-        # Add visible debug info to help diagnose
-        friendly_output += f"\n\n**[DEBUG] quality_feedback status:**\n"
-        friendly_output += f"- Type: {type(quality_feedback).__name__}\n"
-        friendly_output += f"- Is None: {quality_feedback is None}\n"
-        friendly_output += f"- Is dict: {isinstance(quality_feedback, dict)}\n"
-        
-        print(f"[DEBUG] Checking quality_feedback for humanization:", flush=True)
-        print(f"  quality_feedback: {quality_feedback}", flush=True)
-        print(f"  type check: {isinstance(quality_feedback, dict)}", flush=True)
-        
         if quality_feedback and isinstance(quality_feedback, dict):
-            print(f"[DEBUG] quality_feedback is valid dict, calling humanize_quality_feedback()", flush=True)
             try:
                 detailed_quality = humanize_quality_feedback(quality_feedback)
                 friendly_output += f"\n\n---\n\n{detailed_quality}"
-                print(f"[DEBUG] Successfully added humanized feedback", flush=True)
-            except Exception as hum_err:
-                print(f"[DEBUG] ERROR humanizing: {hum_err}", flush=True)
-                import traceback
-                friendly_output += f"\n\n---\n\n**[ERROR] Rendering quality feedback failed:**\n```\n{traceback.format_exc()}\n```"
-        else:
-            print(f"[DEBUG] Skipping quality feedback - not a dict or empty", flush=True)
-            if quality_feedback:
-                friendly_output += f"\n- Content sample: {str(quality_feedback)[:100]}\n"
+            except Exception:
+                pass
         
         technical_output = f"""
 **Technical Details:**
@@ -172,7 +144,6 @@ def step_env(fixed_code: str):
     except Exception as e:
         import traceback
         error_msg = f"Error: {str(e)}\n\n{traceback.format_exc()}"
-        print(f"[DEBUG] Exception in step_env: {error_msg}", flush=True)
         return error_msg, "", ""
 
 
