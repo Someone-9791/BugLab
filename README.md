@@ -7,6 +7,7 @@ sdk: docker
 python_version: "3.10"
 app_port: 7860
 pinned: false
+short_description: Python Code Debugging Environment
 ---
 
 # BugLab: Python Code Debugging Environment 🐛→✨
