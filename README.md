@@ -1,4 +1,5 @@
----
+<!--
+---
 title: BugLab
 emoji: 🐛
 colorFrom: indigo
@@ -8,6 +9,7 @@ app_file: server/gradio_ui.py
 pinned: false
 license: mit
 ---
+-->
 
 # BugLab: Python Code Debugging Environment 🐛→✨
 
