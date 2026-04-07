@@ -1,4 +1,4 @@
----
+---
 title: BugLab
 emoji: 🐛
 colorFrom: indigo
