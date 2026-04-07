@@ -1,4 +1,15 @@
-# BugLab: Python Code Debugging Environment 🐛→✨
+---
+title: BugLab
+emoji: 🐛
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+python_version: "3.10"
+app_port: 7860
+pinned: false
+---
+
+# BugLab: Python Code Debugging Environment 🐛→✨
 
 An **OpenEnv reinforcement learning environment** where AI agents learn to debug broken Python code using **deterministic, reproducible evaluation**.
 
