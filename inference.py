@@ -5,7 +5,7 @@ Tests the environment against easy, medium, and hard debugging tasks.
 
 MANDATORY REQUIREMENTS:
 - Uses OpenAI Client for all LLM calls
-- Reads from env vars: API_BASE_URL, MODEL_NAME, HF_TOKEN
+- Reads from env vars: API_BASE_URL, MODEL_NAME, OPENAI_API_KEY
 - Emits structured logs: [START], [STEP], [END]
 - Completes in < 20 minutes
 - Works on 2 vCPU, 8GB RAM
