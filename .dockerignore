@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment
+bin/
+include/
+lib/
+lib64/
+pyvenv.cfg
+share/
+
+# Environment files
+.env
+.env.local
+.env*.local
+huggingface_token.txt
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.code-workspace
+ml.code-workspace
+
+# Documentation (keep only essential docs)
+*.md
+!README.md
+Obsidian-VS/.obsidian/
+
+# Testing and UI (not needed in container)
+test_ui_pyqt.py
+RUN_UI.sh
+TEST_UI.sh
+UI_QUICK_START.txt
+
+# Development files
+*.ipynb
+.ipynb_checkpoints/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Large files
+*.pdf
+
+# GitHub
+.github/
+
+# Session files
+SESSION_CONTINUITY.md
+PUSH_STATUS.md
+GITHUB_SETUP.md
+FINAL_CHECKLIST.md
+PROJECT_CONTEXT.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md

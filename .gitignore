@@ -1,0 +1,69 @@
+# Virtual Environment
+bin/
+include/
+lib/
+lib64
+pyvenv.cfg
+*.pyc
+
+# Python
+__pycache__/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+*.egg
+*.whl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.code-workspace
+
+# Environment
+.env
+.env.local
+.env*.local
+huggingface_token.txt
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Development
+.ipynb_checkpoints/
+*.ipynb
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+/dist
+/build
+*.egg-info/
+
+# Testing
+.coverage
+htmlcov/
+
+# IDE specific
+*.sublime-workspace
+*.sublime-project
+
+# Local storage
+.cache/
+tmp/
+temp/
+
+# Obsidian
+.obsidian/
+
+# Large files (documentation PDFs are large, consider hosting separately)
+# *.pdf
+
+# Node modules (if using any JS tooling)
+node_modules/
+package-lock.json

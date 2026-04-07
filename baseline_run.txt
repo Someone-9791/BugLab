@@ -1,0 +1,25 @@
+[START] task=easy_1 env=python-debug-env model=Qwen/Qwen2.5-72B-Instruct
+[END] success=false steps=1 rewards=0.00
+Episode error: Failed to connect to ws://localhost:8000/ws: [WinError 1225] The remote computer refused the network connection
+[START] task=easy_2 env=python-debug-env model=Qwen/Qwen2.5-72B-Instruct
+[END] success=false steps=1 rewards=0.00
+Episode error: Failed to connect to ws://localhost:8000/ws: [WinError 1225] The remote computer refused the network connection
+[START] task=medium_1 env=python-debug-env model=Qwen/Qwen2.5-72B-Instruct
+Episode error: Failed to connect to ws://localhost:8000/ws: [WinError 1225] The remote computer refused the network connection
+[END] success=false steps=1 rewards=0.00
+[START] task=medium_2 env=python-debug-env model=Qwen/Qwen2.5-72B-Instruct
+Episode error: Failed to connect to ws://localhost:8000/ws: [WinError 1225] The remote computer refused the network connection
+[END] success=false steps=1 rewards=0.00
+[START] task=hard_1 env=python-debug-env model=Qwen/Qwen2.5-72B-Instruct
+[END] success=false steps=1 rewards=0.00
+Episode error: Failed to connect to ws://localhost:8000/ws: [WinError 1225] The remote computer refused the network connection
+
+============================================================
+Baseline Inference Results
+============================================================
+Model: Qwen/Qwen2.5-72B-Instruct
+Episodes tested: 5
+Episodes successful: 0
+Success rate: 0.0%
+Average reward: 0.000
+============================================================

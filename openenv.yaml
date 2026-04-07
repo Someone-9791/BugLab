@@ -1,0 +1,22 @@
+name: python-debug-env
+version: 0.1.0
+description: "BugLab - An RL environment where agents debug broken Python code. Dual reward system: test pass rate + static code analysis."
+author: "BugLab Team"
+tags:
+  - python
+  - code
+  - debugging
+  - education
+  - dual-reward
+  
+entry_point: server.app:app
+action_type: models.DebugAction
+observation_type: models.DebugObservation
+state_type: models.DebugState
+
+requirements:
+  - openenv-core>=0.2.0
+  - fastapi>=0.100.0
+  - uvicorn>=0.23.0
+  - pydantic>=2.0.0
+  - requests>=2.31.0
