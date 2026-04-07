@@ -1,17 +1,4 @@
----
-title: BugLab
-emoji: 🐛
-colorFrom: indigo
-colorTo: blue
-sdk: docker
-sdk_version: "1.0"
-python_version: "3.10"
-app_file: server/gradio_ui.py
-pinned: false
-license: mit
----
-
-# BugLab: Python Code Debugging Environment 🐛→✨
+# BugLab: Python Code Debugging Environment 🐛→✨
 
 An **OpenEnv reinforcement learning environment** where AI agents learn to debug broken Python code using **deterministic, reproducible evaluation**.
 
