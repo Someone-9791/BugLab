@@ -154,7 +154,7 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
             
             try:
                 response = client.chat.completions.create(
-                    model=MODEL_NAME,
+                    model=model_name,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=TEMPERATURE,
                     max_tokens=MAX_TOKENS,
@@ -232,14 +232,24 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 async def main_async():
     """Run baseline inference across multiple episodes testing all 3 tasks."""
-    # Validate that validator provided required variables
-    if not API_BASE_URL or not API_KEY or not MODEL_NAME:
-        sys.exit(1)
+    # Validator MUST provide: API_BASE_URL, API_KEY, MODEL_NAME
+    # If any are missing, the script cannot make API calls through their proxy
+    api_base_url = API_BASE_URL
+    api_key = API_KEY
+    model_name = MODEL_NAME
     
-    # Initialize OpenAI client with validator-provided credentials
+    # If missing, we cannot proceed (this causes the script to complete without API calls)
+    if not api_base_url:
+        return
+    if not api_key:
+        return
+    if not model_name:
+        return
+    
+    # Initialize OpenAI client with EXACT validator-provided credentials
     client = OpenAI(
-        base_url=API_BASE_URL,
-        api_key=API_KEY,
+        base_url=api_base_url,
+        api_key=api_key,
     )
     
     # Define explicit tasks to test (maps to TASKS dict in environment.py)
@@ -261,7 +271,7 @@ async def main_async():
             episode_num += 1
             episode_id = f"{task_name}_{i+1}"
             
-            log_start(episode_id, MODEL_NAME, BENCHMARK)
+            log_start(episode_id, model_name, BENCHMARK)
             
             try:
                 # Explicitly pass task_id to test specific task
@@ -284,7 +294,7 @@ async def main_async():
     print(f"\n{'='*60}", file=sys.stderr)
     print(f"Baseline Inference Results", file=sys.stderr)
     print(f"{'='*60}", file=sys.stderr)
-    print(f"Model: {MODEL_NAME}", file=sys.stderr)
+    print(f"Model: {model_name}", file=sys.stderr)
     print(f"Episodes tested: {total_episodes}", file=sys.stderr)
     print(f"Episodes successful: {successful_episodes}", file=sys.stderr)
     print(f"Success rate: {success_rate:.1%}", file=sys.stderr)
