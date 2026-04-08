@@ -51,8 +51,8 @@ pip install -r requirements.txt
 ### Local Development
 
 ```bash
-# Start server
-python -m server.app
+# Start FastAPI server (for API access)
+uvicorn server.app:app --host 0.0.0.0 --port 8000
 
 # In another terminal, run baseline
 export API_BASE_URL=https://router.huggingface.co/v1
@@ -61,6 +61,19 @@ export HF_TOKEN=your_hf_token
 
 python inference.py
 ```
+
+### Interactive UI (Optional)
+
+For local testing with a visual web interface:
+
+```bash
+# Start Gradio UI
+python -m server.gradio_ui
+
+# Visit http://localhost:7860 in your browser
+```
+
+**Note:** The HuggingFace Space runs the API server (not the UI) to enable automated agent evaluation. The Gradio UI is for local manual testing only.
 
 ### Docker Deployment
 
