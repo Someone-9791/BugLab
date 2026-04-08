@@ -215,6 +215,18 @@ BugLab/
 
 ---
 
+## Team
+
+**Team Name:** Team Not Found
+
+| Role | Name |
+|------|------|
+| 👨‍💻 **Main Developer** | Pranatpal Sharma |
+| 👩‍💼 **Team Leader** | Shloka Chourasiya |
+| 📚 **Documentation** | Vedant Sharma |
+
+---
+
 ## License & Acknowledgments
 
 - **License**: MIT
