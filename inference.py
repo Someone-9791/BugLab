@@ -156,7 +156,7 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
             
             try:
                 response = client.chat.completions.create(
-                    model=MODEL_NAME,
+                    model=model_name,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=TEMPERATURE,
                     max_tokens=MAX_TOKENS,
@@ -234,13 +234,26 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 async def main_async():
     """Run baseline inference across multiple episodes testing all 3 tasks."""
-    if not API_KEY:
+    # MANDATORY: Validator injects API_BASE_URL, API_KEY, and MODEL_NAME environment variables
+    # These MUST be used - do not fall back to other providers or hardcoded values
+    if not os.getenv("API_BASE_URL"):
         sys.exit(1)
     
-    # Initialize OpenAI client
+    if not os.getenv("API_KEY"):
+        sys.exit(1)
+    
+    if not os.getenv("MODEL_NAME"):
+        sys.exit(1)
+    
+    # Initialize OpenAI client EXACTLY as the validator expects
+    # Use the EXACT environment variable names they inject - no defaults, no fallbacks
+    api_base_url = os.environ["API_BASE_URL"]
+    api_key = os.environ["API_KEY"]
+    model_name = os.environ["MODEL_NAME"]
+    
     client = OpenAI(
-        base_url=API_BASE_URL,
-        api_key=API_KEY,
+        base_url=api_base_url,
+        api_key=api_key,
     )
     
     # Define explicit tasks to test (maps to TASKS dict in environment.py)
@@ -262,7 +275,7 @@ async def main_async():
             episode_num += 1
             episode_id = f"{task_name}_{i+1}"
             
-            log_start(episode_id, MODEL_NAME, BENCHMARK)
+            log_start(episode_id, model_name, BENCHMARK)
             
             try:
                 # Explicitly pass task_id to test specific task
