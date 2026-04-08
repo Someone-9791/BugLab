@@ -155,11 +155,12 @@ def create_interface():
     with gr.Blocks(
         title="BugLab - AI Code Debugging",
         css="""
-        /* PERMANENTLY STATIC Your Fix box - NO dynamic resizing under any condition */
+        /* PERMANENTLY STATIC Your Fix box - single scrollbar only */
         .code-static {
             height: 280px !important;
             min-height: 280px !important;
             max-height: 280px !important;
+            overflow: hidden !important;
         }
         .code-static .CodeMirror {
             height: 280px !important;
@@ -171,16 +172,17 @@ def create_interface():
             min-height: 280px !important;
             max-height: 280px !important;
         }
+        .code-static .cm-scroller {
+            height: 280px !important;
+            max-height: 280px !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+        }
         .code-static textarea {
             height: 280px !important;
             min-height: 280px !important;
             max-height: 280px !important;
             resize: none !important;
-        }
-        .code-static .cm-scroller {
-            height: 280px !important;
-            min-height: 280px !important;
-            max-height: 280px !important;
         }
         """
     ) as demo:
