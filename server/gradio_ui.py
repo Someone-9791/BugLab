@@ -153,7 +153,36 @@ def create_interface():
     initialize_env()
     
     with gr.Blocks(
-        title="BugLab - AI Code Debugging"
+        title="BugLab - AI Code Debugging",
+        css="""
+        /* PERMANENTLY STATIC Your Fix box - NO dynamic resizing under any condition */
+        .code-static {
+            height: 280px !important;
+            min-height: 280px !important;
+            max-height: 280px !important;
+        }
+        .code-static .CodeMirror {
+            height: 280px !important;
+            min-height: 280px !important;
+            max-height: 280px !important;
+        }
+        .code-static .cm-editor {
+            height: 280px !important;
+            min-height: 280px !important;
+            max-height: 280px !important;
+        }
+        .code-static textarea {
+            height: 280px !important;
+            min-height: 280px !important;
+            max-height: 280px !important;
+            resize: none !important;
+        }
+        .code-static .cm-scroller {
+            height: 280px !important;
+            min-height: 280px !important;
+            max-height: 280px !important;
+        }
+        """
     ) as demo:
         gr.Markdown("""
         # 🐛 BugLab - Debug Python Code with RL
@@ -184,7 +213,8 @@ def create_interface():
                     label="Enter fixed code here",
                     language="python",
                     lines=12,
-                    show_label=True
+                    show_label=True,
+                    elem_classes="code-static"
                 )
         
         # Original Code Section (full width)
