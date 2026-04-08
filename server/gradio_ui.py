@@ -160,6 +160,9 @@ def create_interface():
         .code-section { display: flex; gap: 15px; }
         .button-row { gap: 10px; margin: 15px 0; }
         .results-section { margin-top: 20px; }
+        /* Force equal heights for side-by-side boxes */
+        .equal-height textarea { min-height: 380px !important; }
+        .equal-height .CodeMirror { min-height: 380px !important; }
         """
     ) as demo:
         gr.Markdown("""
@@ -190,8 +193,9 @@ def create_interface():
                 fixed_code = gr.Code(
                     label="Enter fixed code here",
                     language="python",
-                    lines=16,
-                    show_label=True
+                    lines=18,
+                    show_label=True,
+                    elem_classes="equal-height"
                 )
         
         # Original Code Section (full width)
