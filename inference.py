@@ -229,16 +229,16 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 def main():
     """Entry point - make API call with validator-provided credentials."""
-    # Read environment variables EXACTLY as specified in the official checklist:
-    # https://checklist requirements
-    api_base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+    # The validator explicitly states: "Use the API_BASE_URL and API_KEY environment variables we inject"
+    # This is what they're actually providing, regardless of documentation
+    api_base_url = os.getenv("API_BASE_URL")
+    api_key = os.getenv("API_KEY")
     model_name = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
-    hf_token = os.getenv("HF_TOKEN")  # NO DEFAULT - required from validator
     
-    # Make API call ONLY if validator provided HF_TOKEN
-    if hf_token:
+    # Make API call ONLY if validator provided both API_BASE_URL and API_KEY
+    if api_base_url and api_key:
         try:
-            client = OpenAI(base_url=api_base_url, api_key=hf_token)
+            client = OpenAI(base_url=api_base_url, api_key=api_key)
             completion = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": "test"}],
@@ -262,16 +262,16 @@ async def main_async():
         ("optimize_and_fix", 1),
     ]
     
-    # Read credentials EXACTLY as specified in checklist
-    api_base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+    # Use the exact environment variables the validator provides
+    api_base_url = os.getenv("API_BASE_URL")
+    api_key = os.getenv("API_KEY")
     model_name = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
-    hf_token = os.getenv("HF_TOKEN")
     
-    # Must have HF_TOKEN to proceed
-    if not hf_token:
+    # Must have both to proceed
+    if not (api_base_url and api_key):
         return
     
-    client = OpenAI(base_url=api_base_url, api_key=hf_token)
+    client = OpenAI(base_url=api_base_url, api_key=api_key)
     
     total_episodes = sum(count for _, count in EXPLICIT_TASKS)
     successful_episodes = 0
