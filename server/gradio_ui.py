@@ -153,28 +153,7 @@ def create_interface():
     initialize_env()
     
     with gr.Blocks(
-        title="BugLab - AI Code Debugging",
-        css="""
-        /* FIXED static height for Your Fix box - matches Problem section exactly */
-        .code-wrapper { 
-            height: 200px !important; 
-            min-height: 200px !important;
-            max-height: 200px !important;
-            overflow-y: auto !important;
-        }
-        .code-wrapper .CodeMirror { 
-            height: 200px !important;
-            min-height: 200px !important;
-        }
-        .code-wrapper textarea { 
-            height: 200px !important;
-            min-height: 200px !important;
-        }
-        .code-wrapper .cm-editor {
-            height: 200px !important;
-            min-height: 200px !important;
-        }
-        """
+        title="BugLab - AI Code Debugging"
     ) as demo:
         gr.Markdown("""
         # 🐛 BugLab - Debug Python Code with RL
@@ -204,9 +183,8 @@ def create_interface():
                 fixed_code = gr.Code(
                     label="Enter fixed code here",
                     language="python",
-                    lines=5,
-                    show_label=True,
-                    elem_classes="code-wrapper"
+                    lines=6,
+                    show_label=True
                 )
         
         # Original Code Section (full width)
