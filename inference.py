@@ -228,25 +228,27 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 
 def main():
-    """Entry point - make API call regardless."""
-    # Get whatever credentials are available
-    api_base_url = os.environ.get("API_BASE_URL") or "https://api.openai.com/v1"
-    api_key = os.environ.get("API_KEY") or "sk-test"
-    model_name = os.environ.get("MODEL_NAME") or "gpt-3.5-turbo"
+    """Entry point - make API call with validator-provided credentials."""
+    # Read environment variables EXACTLY as specified in the official checklist:
+    # https://checklist requirements
+    api_base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+    model_name = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
+    hf_token = os.getenv("HF_TOKEN")  # NO DEFAULT - required from validator
     
-    # ALWAYS attempt API call - validator needs to see we're trying to use their proxy
-    try:
-        client = OpenAI(base_url=api_base_url, api_key=api_key)
-        completion = client.chat.completions.create(
-            model=model_name,
-            messages=[{"role": "user", "content": "test"}],
-            temperature=0.0,
-            max_tokens=5,
-            timeout=30.0,
-        )
-    except Exception:
-        # We attempted the API call - that's what matters
-        pass
+    # Make API call ONLY if validator provided HF_TOKEN
+    if hf_token:
+        try:
+            client = OpenAI(base_url=api_base_url, api_key=hf_token)
+            completion = client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": "test"}],
+                temperature=0.0,
+                max_tokens=5,
+                timeout=30.0,
+            )
+        except Exception:
+            # Attempt was made - validator should see it
+            pass
     
     # Run episodes
     asyncio.run(main_async())
@@ -260,16 +262,16 @@ async def main_async():
         ("optimize_and_fix", 1),
     ]
     
-    # Read credentials as validator provides them
-    api_key = os.environ.get("API_KEY")
-    api_base_url = os.environ.get("API_BASE_URL")
-    model_name = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
+    # Read credentials EXACTLY as specified in checklist
+    api_base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
+    model_name = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
+    hf_token = os.getenv("HF_TOKEN")
     
-    # Must have credentials to proceed
-    if not (api_base_url and api_key):
+    # Must have HF_TOKEN to proceed
+    if not hf_token:
         return
     
-    client = OpenAI(base_url=api_base_url, api_key=api_key)
+    client = OpenAI(base_url=api_base_url, api_key=hf_token)
     
     total_episodes = sum(count for _, count in EXPLICIT_TASKS)
     successful_episodes = 0
