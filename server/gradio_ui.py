@@ -158,7 +158,7 @@ def create_interface():
         /* Force equal heights - Problem section combined height */
         .problem-section { display: flex; flex-direction: column; gap: 10px; }
         .problem-section > div { flex: 1; }
-        .code-wrapper { height: 320px !important; overflow: hidden; }
+        .code-wrapper { height: 240px !important; overflow: hidden; }
         .code-wrapper .CodeMirror { height: 100% !important; }
         .code-wrapper textarea { height: 100% !important; }
         """
