@@ -155,11 +155,21 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
                 
                 fixed_code = response.choices[0].message.content.strip()
                 
+                # Log successful API call for validator verification
+                print(f"[DEBUG] LLM API call successful (model={MODEL_NAME})", flush=True)
+                
                 # Remove markdown code blocks if present
                 if "```python" in fixed_code:
                     fixed_code = fixed_code.split("```python")[1].split("```")[0].strip()
                 elif "```" in fixed_code:
                     fixed_code = fixed_code.split("```")[1].split("```")[0].strip()
+                
+            except Exception as llm_error:
+                # CRITICAL: Log LLM API errors prominently for debugging
+                print(f"[ERROR] LLM API call failed: {llm_error}", file=sys.stderr, flush=True)
+                print(f"[ERROR] API_BASE_URL={API_BASE_URL}, MODEL={MODEL_NAME}", file=sys.stderr, flush=True)
+                # Re-raise to stop execution - validator needs to see we tried
+                raise
                 
                 # PRIORITY 1.3: Wrap step() call with timeout
                 try:
@@ -211,19 +221,27 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 async def main_async():
     """Run baseline inference across multiple episodes testing all 3 tasks."""
+    # CRITICAL: Verify API_KEY is set
     if not API_KEY:
-        print("ERROR: OPENAI_API_KEY, HF_TOKEN, or API_KEY environment variable not set", file=sys.stderr)
+        print("[ERROR] No API key found! Check API_KEY, OPENAI_API_KEY, or HF_TOKEN environment variables", file=sys.stderr, flush=True)
         sys.exit(1)
     
     # Debug: Confirm we're using the validator's API (without revealing the full key)
     api_key_preview = f"{API_KEY[:8]}...{API_KEY[-4:]}" if len(API_KEY) > 12 else "***"
-    print(f"[DEBUG] Using API_BASE_URL={API_BASE_URL}, API_KEY={api_key_preview}", flush=True)
+    print(f"[DEBUG] Using API_BASE_URL={API_BASE_URL}", flush=True)
+    print(f"[DEBUG] Using API_KEY={api_key_preview}", flush=True)
+    print(f"[DEBUG] Using MODEL_NAME={MODEL_NAME}", flush=True)
     
     # Initialize OpenAI client
-    client = OpenAI(
-        base_url=API_BASE_URL,
-        api_key=API_KEY,
-    )
+    try:
+        client = OpenAI(
+            base_url=API_BASE_URL,
+            api_key=API_KEY,
+        )
+        print(f"[DEBUG] OpenAI client initialized successfully", flush=True)
+    except Exception as e:
+        print(f"[ERROR] Failed to initialize OpenAI client: {e}", file=sys.stderr, flush=True)
+        sys.exit(1)
     
     # Define explicit tasks to test (maps to TASKS dict in environment.py)
     EXPLICIT_TASKS = [
