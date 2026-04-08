@@ -152,63 +152,106 @@ def create_interface():
     # Initialize environment on startup
     initialize_env()
     
-    with gr.Blocks(title="BugLab - AI Code Debugging") as demo:
+    with gr.Blocks(
+        title="BugLab - AI Code Debugging",
+        css="""
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header-section { margin-bottom: 20px; }
+        .code-section { display: flex; gap: 15px; }
+        .button-row { gap: 10px; margin: 15px 0; }
+        .results-section { margin-top: 20px; }
+        """
+    ) as demo:
         gr.Markdown("""
         # 🐛 BugLab - Debug Python Code with RL
         
-        An environment where AI agents fix broken Python code using a dual-reward system:
-        - **70%**: Test pass rate (deterministic)
-        - **30%**: Code quality score (deterministic static analysis)
-        
-        Try debugging code problems below!
+        **Fix broken Python code** using a **dual-reward system**: 70% test pass rate + 30% code quality
         """)
         
+        # Problem & Code Editing Section (2-column layout)
         with gr.Row():
-            with gr.Column():
-                gr.Markdown("### Problem")
+            with gr.Column(scale=1, min_width=400):
+                gr.Markdown("## 📋 Problem")
                 problem_description = gr.Textbox(
-                    label="Problem Description",
-                    lines=3,
-                    interactive=False
+                    label="Description",
+                    lines=4,
+                    interactive=False,
+                    show_label=True
                 )
-                
-                gr.Markdown("### Buggy Code")
-                buggy_code = gr.Code(
-                    label="Original (Broken) Code",
-                    language="python",
-                    interactive=False
+                problem_status = gr.Textbox(
+                    label="Status",
+                    interactive=False,
+                    show_label=True,
+                    lines=2
                 )
             
-            with gr.Column():
-                gr.Markdown("### Your Fix")
+            with gr.Column(scale=1, min_width=400):
+                gr.Markdown("## 🔧 Your Fix")
                 fixed_code = gr.Code(
-                    label="Fixed Code",
+                    label="Enter fixed code here",
                     language="python",
-                    lines=10
-                )
-        
-        with gr.Row():
-            reset_btn = gr.Button("🔄 Reset (Get New Problem)", variant="primary", scale=1)
-            step_btn = gr.Button("▶️ Submit Fix & Get Reward", variant="primary", scale=1)
-        
-        with gr.Row():
-            with gr.Column(scale=2):
-                friendly_output = gr.Markdown(
-                    label="Your Results",
-                    value="Submit your fix to see results here!"
-                )
-            with gr.Column(scale=1):
-                technical_output = gr.Textbox(
-                    label="Technical Details",
-                    interactive=False,
                     lines=10,
-                    value="Technical details will appear here..."
+                    show_label=True
                 )
         
-        problem_status = gr.Textbox(
-            label="Problem Status",
-            interactive=False
-        )
+        # Original Code Section (full width)
+        with gr.Row():
+            gr.Markdown("## 🐛 Original (Broken) Code")
+        
+        with gr.Row():
+            buggy_code = gr.Code(
+                label="",
+                language="python",
+                interactive=False,
+                lines=8,
+                show_label=False
+            )
+        
+        # Action Buttons
+        with gr.Row(elem_classes="button-row"):
+            reset_btn = gr.Button("🔄 Reset Problem", variant="primary", scale=1, size="lg")
+            step_btn = gr.Button("▶️ Submit & Evaluate", variant="primary", scale=1, size="lg")
+        
+        # Results Section
+        with gr.Row(elem_classes="results-section"):
+            friendly_output = gr.Markdown(
+                value="📊 Results will appear here after you submit your fix",
+                label=""
+            )
+        
+        # Technical Details (collapsible-like section)
+        with gr.Row():
+            with gr.Accordion("📈 Technical Details", open=False):
+                technical_output = gr.Textbox(
+                    label="",
+                    interactive=False,
+                    lines=8,
+                    value="Technical data will appear here...",
+                    show_label=False
+                )
+        
+        # Instructions Section
+        with gr.Row():
+            with gr.Accordion("📖 How to Use & Scoring System", open=False):
+                gr.Markdown("""
+                ### Quick Start:
+                1. Click **🔄 Reset Problem** to load a new debugging task
+                2. Read the problem description and study the broken code
+                3. Write your fix in the **Your Fix** editor
+                4. Click **▶️ Submit & Evaluate** to test your solution
+                5. Check your score and detailed feedback below
+                
+                ### Scoring Breakdown:
+                - **70%** - Test Pass Rate: Does your code pass all test cases?
+                - **30%** - Code Quality: Is your code clean, efficient, and well-written?
+                - **Max Score**: 1.0 (perfect solution)
+                
+                ### Tips:
+                - Read the error summary carefully - it explains what failed
+                - You get 3 attempts per problem to fix it
+                - Higher difficulty problems earn more reward
+                - Focus on correctness first, then optimize for quality
+                """)
         
         # Set up event handlers
         reset_btn.click(
@@ -221,24 +264,6 @@ def create_interface():
             inputs=[fixed_code],
             outputs=[friendly_output, technical_output, problem_status]
         )
-        
-        gr.Markdown("""
-        ---
-        
-        ## 📖 How to Use:
-        1. Click **🔄 Reset** to get a new debugging problem
-        2. Read the problem description and examine the broken code
-        3. Write your fixed code in the **Your Fix** section
-        4. Click **▶️ Submit Fix** to evaluate your solution
-        5. Review your **visual score breakdown** and **technical details**
-        
-        ### 🎯 Scoring System:
-        - **70%** from test pass rate (did your code pass the tests?)
-        - **30%** from code quality (is your code clean and well-written?)
-        - **Maximum reward:** 1.0 (perfect score)
-        
-        💡 **Tip:** Read the error summary if tests fail - it tells you exactly what went wrong!
-        """)
     
     return demo
 
