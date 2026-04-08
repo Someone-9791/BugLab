@@ -42,20 +42,68 @@ async def validation_exception_handler(request, exc):
 @app.get("/")
 async def root():
     """Root endpoint - provides API info for HuggingFace Spaces."""
-    return JSONResponse({
-        "name": "BugLab",
-        "version": "0.1.0",
-        "description": "An RL environment where agents debug broken Python code",
-        "status": "healthy",
-        "endpoints": {
-            "health": "/health - Check server health",
-            "reset": "POST /reset - Reset environment and get new problem",
-            "step": "POST /step - Submit code fix and get reward",
-            "websocket": "WS /ws - WebSocket connection for streaming",
-        },
-        "documentation": "https://github.com/Someone-9791/BugLab",
-        "huggingface_space": "https://huggingface.co/spaces/Someone5249/BugLab",
-    })
+    from fastapi.responses import HTMLResponse
+    html_content = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>BugLab - OpenEnv API</title>
+        <style>
+            body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #0d1117; color: #c9d1d9; }
+            h1 { color: #58a6ff; }
+            h2 { color: #8b949e; margin-top: 30px; }
+            .status { color: #3fb950; font-weight: bold; }
+            code { background: #161b22; padding: 2px 6px; border-radius: 3px; color: #ff7b72; }
+            .endpoint { background: #161b22; padding: 15px; margin: 10px 0; border-left: 3px solid #58a6ff; }
+            .method { color: #79c0ff; font-weight: bold; }
+            a { color: #58a6ff; text-decoration: none; }
+            a:hover { text-decoration: underline; }
+        </style>
+    </head>
+    <body>
+        <h1>🐛 BugLab - OpenEnv API Server</h1>
+        <p><span class="status">✓ Status: HEALTHY</span></p>
+        <p>An RL environment where AI agents learn to debug broken Python code using deterministic evaluation.</p>
+        
+        <h2>🔌 API Endpoints</h2>
+        <div class="endpoint">
+            <div><span class="method">POST</span> <code>/reset</code></div>
+            <div>Reset environment and get a new debugging problem</div>
+        </div>
+        <div class="endpoint">
+            <div><span class="method">POST</span> <code>/step</code></div>
+            <div>Submit code fix and receive reward (0.0-1.0)</div>
+        </div>
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/state</code></div>
+            <div>Get current episode state</div>
+        </div>
+        <div class="endpoint">
+            <div><span class="method">GET</span> <code>/health</code></div>
+            <div>Check server health</div>
+        </div>
+        
+        <h2>📚 Resources</h2>
+        <ul>
+            <li><a href="https://github.com/Someone-9791/BugLab" target="_blank">GitHub Repository</a></li>
+            <li><a href="https://github.com/Someone-9791/BugLab#readme" target="_blank">Documentation</a></li>
+            <li><a href="https://huggingface.co/spaces/Someone5249/BugLab" target="_blank">HuggingFace Space</a></li>
+        </ul>
+        
+        <h2>👥 Team Not Found</h2>
+        <ul>
+            <li>Pranatpal Sharma - Main Developer</li>
+            <li>Shloka Chourasiya - Team Leader</li>
+            <li>Vedant Sharma - UI/UX Developer</li>
+        </ul>
+        
+        <p style="margin-top: 40px; color: #8b949e; font-size: 0.9em;">
+            OpenEnv Hackathon 2026 | Version 0.1.0
+        </p>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 
 def main():
