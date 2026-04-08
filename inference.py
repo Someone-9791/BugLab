@@ -25,12 +25,10 @@ from openenv import GenericEnvClient
 random.seed(42)
 np.random.seed(42)
 
-# Environment variables (validator injects API_BASE_URL and API_KEY)
-# Priority: Use validator's variables first, then fallback to local testing defaults
-API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-# CRITICAL: Check API_KEY first (validator's variable), then fallback to OPENAI_API_KEY/HF_TOKEN
-API_KEY = os.getenv("API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN")
+# Environment variables (validator MUST inject these)
+API_BASE_URL = os.getenv("API_BASE_URL")
+MODEL_NAME = os.getenv("MODEL_NAME")
+API_KEY = os.getenv("API_KEY")
 ENV_URL = os.getenv("ENV_URL", "http://localhost:8000")
 BENCHMARK = "BugLab"
 
@@ -156,7 +154,7 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
             
             try:
                 response = client.chat.completions.create(
-                    model=model_name,
+                    model=MODEL_NAME,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=TEMPERATURE,
                     max_tokens=MAX_TOKENS,
@@ -234,26 +232,14 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 async def main_async():
     """Run baseline inference across multiple episodes testing all 3 tasks."""
-    # MANDATORY: Validator injects API_BASE_URL, API_KEY, and MODEL_NAME environment variables
-    # These MUST be used - do not fall back to other providers or hardcoded values
-    if not os.getenv("API_BASE_URL"):
+    # Validate that validator provided required variables
+    if not API_BASE_URL or not API_KEY or not MODEL_NAME:
         sys.exit(1)
     
-    if not os.getenv("API_KEY"):
-        sys.exit(1)
-    
-    if not os.getenv("MODEL_NAME"):
-        sys.exit(1)
-    
-    # Initialize OpenAI client EXACTLY as the validator expects
-    # Use the EXACT environment variable names they inject - no defaults, no fallbacks
-    api_base_url = os.environ["API_BASE_URL"]
-    api_key = os.environ["API_KEY"]
-    model_name = os.environ["MODEL_NAME"]
-    
+    # Initialize OpenAI client with validator-provided credentials
     client = OpenAI(
-        base_url=api_base_url,
-        api_key=api_key,
+        base_url=API_BASE_URL,
+        api_key=API_KEY,
     )
     
     # Define explicit tasks to test (maps to TASKS dict in environment.py)
@@ -275,7 +261,7 @@ async def main_async():
             episode_num += 1
             episode_id = f"{task_name}_{i+1}"
             
-            log_start(episode_id, model_name, BENCHMARK)
+            log_start(episode_id, MODEL_NAME, BENCHMARK)
             
             try:
                 # Explicitly pass task_id to test specific task
