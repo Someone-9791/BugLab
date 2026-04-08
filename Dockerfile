@@ -30,11 +30,10 @@ COPY server/ ./server/
 # Expose ports
 EXPOSE 7860 8000
 
-# Health check on port 7860 (Gradio UI)
+# Health check on port 7860 (OpenEnv API)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:7860/config || exit 1
+    CMD curl -f http://localhost:7860/ || exit 1
 
-# Run Gradio UI on port 7860 (HuggingFace Spaces standard)
-# HF Spaces connects to the main web interface on 7860
-# FastAPI backend (if needed) would run on 8000, but Gradio UI uses direct environment instance
-CMD ["python", "-m", "server.gradio_ui"]
+# Run FastAPI server on port 7860 (HuggingFace Spaces standard)
+# This exposes the OpenEnv API endpoints: /reset, /step, /state
+CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]
