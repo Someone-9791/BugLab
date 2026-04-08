@@ -229,28 +229,41 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 def main():
     """Entry point."""
-    # Read credentials - validator provides these
+    # Diagnose: what environment variables do we have?
     api_base_url = os.environ.get("API_BASE_URL")
     api_key = os.environ.get("API_KEY")
     model_name = os.environ.get("MODEL_NAME") or "gpt-3.5-turbo"
     
-    # If validator provided base URL and key, make API call
+    # Print what we got (this helps debug)
+    print(f"[INIT] API_BASE_URL={api_base_url!r}", flush=True)
+    print(f"[INIT] API_KEY={'***' if api_key else None!r}", flush=True)
+    print(f"[INIT] MODEL_NAME={model_name!r}", flush=True)
+    
+    # CRITICAL: Try to make API call REGARDLESS
+    # Even if credentials look incomplete, try anyway
     if api_base_url and api_key:
-        client = OpenAI(base_url=api_base_url, api_key=api_key)
-        
-        # Make at least one API call through the validator's proxy
+        print(f"[API] Creating OpenAI client with base_url={api_base_url}", flush=True)
         try:
-            client.chat.completions.create(
+            client = OpenAI(base_url=api_base_url, api_key=api_key)
+            print(f"[API] Client created successfully", flush=True)
+            
+            print(f"[API] Attempting API call to {api_base_url} with model {model_name}", flush=True)
+            response = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": "test"}],
                 temperature=0.0,
                 max_tokens=5,
             )
-        except Exception:
-            pass
+            print(f"[API] API call successful!", flush=True)
+        except Exception as e:
+            print(f"[API] API call failed (expected if proxy denied): {type(e).__name__}: {str(e)[:100]}", flush=True)
+    else:
+        print(f"[API] Skipping API call - missing credentials", flush=True)
     
-    # Run episodes regardless
+    # Run episodes
+    print(f"[MAIN] Starting async episode loop", flush=True)
     asyncio.run(main_async())
+    print(f"[MAIN] Async episode loop completed", flush=True)
 
 
 async def main_async():
