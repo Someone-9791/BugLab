@@ -223,7 +223,7 @@ BugLab/
 |------|------|
 | 👨‍💻 **Main Developer** | Pranatpal Sharma |
 | 👩‍💼 **Team Leader** | Shloka Chourasiya |
-| 📚 **Documentation** | Vedant Sharma |
+| 🎨 **UI/UX Developer** | Vedant Sharma |
 
 ---
 
