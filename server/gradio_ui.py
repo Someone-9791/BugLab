@@ -157,22 +157,22 @@ def create_interface():
         css="""
         /* FIXED static height for Your Fix box - matches Problem section exactly */
         .code-wrapper { 
-            height: 240px !important; 
-            min-height: 240px !important;
-            max-height: 240px !important;
+            height: 200px !important; 
+            min-height: 200px !important;
+            max-height: 200px !important;
             overflow-y: auto !important;
         }
         .code-wrapper .CodeMirror { 
-            height: 240px !important;
-            min-height: 240px !important;
+            height: 200px !important;
+            min-height: 200px !important;
         }
         .code-wrapper textarea { 
-            height: 240px !important;
-            min-height: 240px !important;
+            height: 200px !important;
+            min-height: 200px !important;
         }
         .code-wrapper .cm-editor {
-            height: 240px !important;
-            min-height: 240px !important;
+            height: 200px !important;
+            min-height: 200px !important;
         }
         """
     ) as demo:
@@ -204,7 +204,7 @@ def create_interface():
                 fixed_code = gr.Code(
                     label="Enter fixed code here",
                     language="python",
-                    lines=7,
+                    lines=5,
                     show_label=True,
                     elem_classes="code-wrapper"
                 )
