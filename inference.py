@@ -104,7 +104,7 @@ async def connect_with_retry(env_url: str, max_retries: int = 3, initial_delay: 
             env = GenericEnvClient(base_url=env_url)
             await asyncio.wait_for(env.connect(), timeout=10.0)
             return env
-        except (ConnectionError, asyncio.TimeoutError) as e:
+        except Exception as e:
             if attempt == max_retries - 1:
                 raise RuntimeError(f"Failed to connect to {env_url} after {max_retries} attempts: {e}")
             delay = initial_delay * (2 ** attempt)
@@ -155,21 +155,11 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
                 
                 fixed_code = response.choices[0].message.content.strip()
                 
-                # Log successful API call for validator verification
-                print(f"[DEBUG] LLM API call successful (model={MODEL_NAME})", flush=True)
-                
                 # Remove markdown code blocks if present
                 if "```python" in fixed_code:
                     fixed_code = fixed_code.split("```python")[1].split("```")[0].strip()
                 elif "```" in fixed_code:
                     fixed_code = fixed_code.split("```")[1].split("```")[0].strip()
-                
-            except Exception as llm_error:
-                # CRITICAL: Log LLM API errors prominently for debugging
-                print(f"[ERROR] LLM API call failed: {llm_error}", file=sys.stderr, flush=True)
-                print(f"[ERROR] API_BASE_URL={API_BASE_URL}, MODEL={MODEL_NAME}", file=sys.stderr, flush=True)
-                # Re-raise to stop execution - validator needs to see we tried
-                raise
                 
                 # PRIORITY 1.3: Wrap step() call with timeout
                 try:
@@ -213,7 +203,6 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
         return success, step_count, rewards
         
     except Exception as e:
-        print(f"Episode error: {e}", file=sys.stderr)
         if not rewards:
             rewards = [0.0]
         return False, step_count if step_count > 0 else 1, rewards
@@ -221,27 +210,14 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 async def main_async():
     """Run baseline inference across multiple episodes testing all 3 tasks."""
-    # CRITICAL: Verify API_KEY is set
     if not API_KEY:
-        print("[ERROR] No API key found! Check API_KEY, OPENAI_API_KEY, or HF_TOKEN environment variables", file=sys.stderr, flush=True)
         sys.exit(1)
-    
-    # Debug: Confirm we're using the validator's API (without revealing the full key)
-    api_key_preview = f"{API_KEY[:8]}...{API_KEY[-4:]}" if len(API_KEY) > 12 else "***"
-    print(f"[DEBUG] Using API_BASE_URL={API_BASE_URL}", flush=True)
-    print(f"[DEBUG] Using API_KEY={api_key_preview}", flush=True)
-    print(f"[DEBUG] Using MODEL_NAME={MODEL_NAME}", flush=True)
     
     # Initialize OpenAI client
-    try:
-        client = OpenAI(
-            base_url=API_BASE_URL,
-            api_key=API_KEY,
-        )
-        print(f"[DEBUG] OpenAI client initialized successfully", flush=True)
-    except Exception as e:
-        print(f"[ERROR] Failed to initialize OpenAI client: {e}", file=sys.stderr, flush=True)
-        sys.exit(1)
+    client = OpenAI(
+        base_url=API_BASE_URL,
+        api_key=API_KEY,
+    )
     
     # Define explicit tasks to test (maps to TASKS dict in environment.py)
     EXPLICIT_TASKS = [
@@ -258,10 +234,6 @@ async def main_async():
     # Run episodes for each defined task
     episode_num = 0
     for task_name, count in EXPLICIT_TASKS:
-        print(f"\n{'='*60}", file=sys.stderr)
-        print(f"TASK: {task_name.upper()}", file=sys.stderr)
-        print(f"{'='*60}", file=sys.stderr)
-        
         for i in range(count):
             episode_num += 1
             episode_id = f"{task_name}_{i+1}"
@@ -279,7 +251,6 @@ async def main_async():
                 log_end(success, steps, rewards)
                     
             except Exception as e:
-                print(f"Task {episode_id} failed: {e}", file=sys.stderr)
                 log_end(False, 1, [0.0])
                 all_rewards.append(0.0)
     
