@@ -230,8 +230,9 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 def main():
     """Entry point."""
     # Diagnose: what environment variables do we have?
+    # Try multiple possible names for the API key
+    api_key = os.environ.get("API_KEY") or os.environ.get("OPENAI_API_KEY")
     api_base_url = os.environ.get("API_BASE_URL")
-    api_key = os.environ.get("API_KEY")
     model_name = os.environ.get("MODEL_NAME") or "gpt-3.5-turbo"
     
     # Print what we got (this helps debug)
@@ -274,15 +275,17 @@ async def main_async():
         ("optimize_and_fix", 1),
     ]
     
-    # Read credentials
+    # Read credentials - try multiple names
+    api_key = os.environ.get("API_KEY") or os.environ.get("OPENAI_API_KEY")
     api_base_url = os.environ.get("API_BASE_URL")
-    api_key = os.environ.get("API_KEY")
     model_name = os.environ.get("MODEL_NAME") or "gpt-3.5-turbo"
     
     # If we have credentials, make API calls
     if not api_base_url or not api_key:
+        print(f"[ASYNC] Skipping episodes - missing credentials", flush=True)
         return
     
+    print(f"[ASYNC] Creating OpenAI client for episodes", flush=True)
     client = OpenAI(base_url=api_base_url, api_key=api_key)
     
     total_episodes = sum(count for _, count in EXPLICIT_TASKS)
