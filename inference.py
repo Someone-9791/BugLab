@@ -232,13 +232,13 @@ def main():
     # Read credentials - validator provides these
     api_base_url = os.environ.get("API_BASE_URL")
     api_key = os.environ.get("API_KEY")
-    model_name = os.environ.get("MODEL_NAME")
+    model_name = os.environ.get("MODEL_NAME") or "gpt-3.5-turbo"
     
-    # If validator provided credentials, use them
-    if api_base_url and api_key and model_name:
+    # If validator provided base URL and key, make API call
+    if api_base_url and api_key:
         client = OpenAI(base_url=api_base_url, api_key=api_key)
         
-        # Make at least one API call
+        # Make at least one API call through the validator's proxy
         try:
             client.chat.completions.create(
                 model=model_name,
