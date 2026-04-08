@@ -229,16 +229,16 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 def main():
     """Entry point - make API call with validator-provided credentials."""
-    # The validator explicitly states: "Use the API_BASE_URL and API_KEY environment variables we inject"
-    # This is what they're actually providing, regardless of documentation
-    api_base_url = os.getenv("API_BASE_URL")
-    api_key = os.getenv("API_KEY")
+    # Read environment variables per official specification
+    # API_BASE_URL and MODEL_NAME have defaults; HF_TOKEN does not
+    api_base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
     model_name = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
+    hf_token = os.getenv("HF_TOKEN")
     
-    # Make API call ONLY if validator provided both API_BASE_URL and API_KEY
-    if api_base_url and api_key:
+    # Make API call if credentials available (validator will inject HF_TOKEN)
+    if hf_token:
         try:
-            client = OpenAI(base_url=api_base_url, api_key=api_key)
+            client = OpenAI(base_url=api_base_url, api_key=hf_token)
             completion = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": "test"}],
@@ -263,15 +263,15 @@ async def main_async():
     ]
     
     # Use the exact environment variables the validator provides
-    api_base_url = os.getenv("API_BASE_URL")
-    api_key = os.getenv("API_KEY")
+    api_base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
     model_name = os.getenv("MODEL_NAME", "gpt-3.5-turbo")
+    hf_token = os.getenv("HF_TOKEN")
     
-    # Must have both to proceed
-    if not (api_base_url and api_key):
+    # Must have HF_TOKEN to proceed
+    if not hf_token:
         return
     
-    client = OpenAI(base_url=api_base_url, api_key=api_key)
+    client = OpenAI(base_url=api_base_url, api_key=hf_token)
     
     total_episodes = sum(count for _, count in EXPLICIT_TASKS)
     successful_episodes = 0
