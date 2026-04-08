@@ -25,10 +25,12 @@ from openenv import GenericEnvClient
 random.seed(42)
 np.random.seed(42)
 
-# Environment variables (with defaults for local testing)
+# Environment variables (validator injects API_BASE_URL and API_KEY)
+# Priority: Use validator's variables first, then fallback to local testing defaults
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-API_KEY = os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN") or os.getenv("API_KEY")
+# CRITICAL: Check API_KEY first (validator's variable), then fallback to OPENAI_API_KEY/HF_TOKEN
+API_KEY = os.getenv("API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("HF_TOKEN")
 ENV_URL = os.getenv("ENV_URL", "http://localhost:8000")
 BENCHMARK = "BugLab"
 
@@ -212,6 +214,10 @@ async def main_async():
     if not API_KEY:
         print("ERROR: OPENAI_API_KEY, HF_TOKEN, or API_KEY environment variable not set", file=sys.stderr)
         sys.exit(1)
+    
+    # Debug: Confirm we're using the validator's API (without revealing the full key)
+    api_key_preview = f"{API_KEY[:8]}...{API_KEY[-4:]}" if len(API_KEY) > 12 else "***"
+    print(f"[DEBUG] Using API_BASE_URL={API_BASE_URL}, API_KEY={api_key_preview}", flush=True)
     
     # Initialize OpenAI client
     client = OpenAI(
