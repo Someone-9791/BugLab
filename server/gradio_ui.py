@@ -155,9 +155,12 @@ def create_interface():
     with gr.Blocks(
         title="BugLab - AI Code Debugging",
         css="""
-        .equal-cols { display: flex; gap: 20px; align-items: stretch; }
-        .equal-cols > div { flex: 1; display: flex; flex-direction: column; }
-        .equal-cols > div > div { flex: 1; }
+        /* Force equal heights - Problem section combined height */
+        .problem-section { display: flex; flex-direction: column; gap: 10px; }
+        .problem-section > div { flex: 1; }
+        .code-wrapper { height: 320px !important; overflow: hidden; }
+        .code-wrapper .CodeMirror { height: 100% !important; }
+        .code-wrapper textarea { height: 100% !important; }
         """
     ) as demo:
         gr.Markdown("""
@@ -188,8 +191,9 @@ def create_interface():
                 fixed_code = gr.Code(
                     label="Enter fixed code here",
                     language="python",
-                    lines=26,
-                    show_label=True
+                    lines=20,
+                    show_label=True,
+                    elem_classes="code-wrapper"
                 )
         
         # Original Code Section (full width)
