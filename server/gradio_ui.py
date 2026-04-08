@@ -190,7 +190,7 @@ def create_interface():
                 fixed_code = gr.Code(
                     label="Enter fixed code here",
                     language="python",
-                    lines=10,
+                    lines=6,
                     show_label=True
                 )
         
