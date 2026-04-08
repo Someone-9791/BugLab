@@ -233,13 +233,13 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 async def main_async():
     """Run baseline inference across multiple episodes testing all 3 tasks."""
     # Read validator-provided credentials directly from environment at execution time
-    # Do NOT use global module-level variables that may have been cached at import time
     api_base_url = os.environ.get("API_BASE_URL")
     api_key = os.environ.get("API_KEY")
-    model_name = os.environ.get("MODEL_NAME")
+    # MODEL_NAME might not be provided - use default if missing
+    model_name = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
     
-    # If validator provided these, use them. Otherwise exit.
-    if not api_base_url or not api_key or not model_name:
+    # These are MANDATORY from validator
+    if not api_base_url or not api_key:
         return
     
     # Initialize OpenAI client with validator-injected credentials
