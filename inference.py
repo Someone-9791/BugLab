@@ -159,8 +159,6 @@ async def main() -> None:
 
             if getattr(result, "success", None) is True:
                 success = True
-            elif done:
-                success = reward > 0.0
             
             if done:
                 break
