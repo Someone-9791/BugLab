@@ -158,9 +158,12 @@ async def main() -> None:
             buggy_code = obs.get("buggy_code", "")
             description = obs.get("description", "")
 
-            log_step(step=step, action=f"fix_attempt_{step}", reward=reward, done=done, error=error)
+            action_display = fixed_code[:50] if fixed_code else "pass"
+            log_step(step=step, action=action_display, reward=reward, done=done, error=error)
 
             if getattr(result, "success", None) is True:
+                success = True
+            elif done and max(rewards) if rewards else False:
                 success = True
             
             if done:
