@@ -221,16 +221,19 @@ def main():
 
 async def main_async():
     """Run one baseline inference episode."""
-    # Run exactly ONE episode - validator expects single episode output
-    task_name = "fix_logic_bug"
+    # Get task from environment, or use default
+    # Let validator specify task if needed via EVAL_TASK env var
+    task_name = os.getenv("EVAL_TASK", "fix_logic_bug")
     
     log_start(task_name, MODEL_NAME, BENCHMARK)
     
     try:
         success, steps, rewards = await run_episode(client, ENV_URL, task_name)
         log_end(success, steps, rewards)
-    except Exception:
+    except Exception as e:
+        # Always emit [END] even on exception
         log_end(False, 1, [0.0])
+        raise
 
 
 if __name__ == "__main__":
