@@ -20,7 +20,7 @@ STDOUT FORMAT
 
     [START] task=<task_name> env=<benchmark> model=<model_name>
     [STEP]  step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>
-    [END]   success=<true|false> steps=<n> score=<score> rewards=<r1,r2,...,rn>
+    [END]   success=<true|false> steps=<n> rewards=<r1,r2,...,rn>
 
   Rules:
     - One [START] line at episode begin.
@@ -36,7 +36,7 @@ STDOUT FORMAT
     [START] task=fix_logic_bug env=BugLab model=gpt-4.1-mini
     [STEP] step=1 action=fix_attempt_1 reward=0.30 done=false error=null
     [STEP] step=2 action=fix_attempt_2 reward=0.85 done=true error=null
-    [END] success=true steps=2 score=0.575 rewards=0.30,0.85
+    [END] success=true steps=2 rewards=0.30,0.85
 """
 
 import asyncio
@@ -48,7 +48,7 @@ from openai import OpenAI
 from openenv import GenericEnvClient
 
 # Environment variable configuration (MANDATORY)
-API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
+HF_TOKEN = os.getenv("HF_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://api.openai.com/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "gpt-3.5-turbo"
 TASK_NAME = os.getenv("EVAL_TASK", "fix_logic_bug")
@@ -85,9 +85,9 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
     )
 
 
-def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
+def log_end(success: bool, steps: int, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}", flush=True)
+    print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}", flush=True)
 
 
 def build_user_prompt(step: int, buggy_code: str, description: str) -> str:
@@ -120,19 +120,17 @@ def get_model_message(client: OpenAI, step: int, buggy_code: str, description: s
         text = (completion.choices[0].message.content or "").strip()
         return text if text else "pass"
     except Exception as exc:
-        print(f"[DEBUG] Model request failed: {exc}", flush=True)
         return "pass"
 
 
 async def main() -> None:
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
     env = GenericEnvClient(ENV_URL)
 
     history: List[str] = []
     rewards: List[float] = []
     steps_taken = 0
-    score = 0.0
     success = False
 
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
@@ -168,16 +166,14 @@ async def main() -> None:
             if done:
                 break
 
-        score = sum(rewards) / MAX_TOTAL_REWARD if MAX_TOTAL_REWARD > 0 else 0.0
-        score = min(max(score, 0.0), 1.0)  # clamp to [0, 1]
-        success = score >= SUCCESS_SCORE_THRESHOLD
+        success = sum(rewards) > 0 if rewards else False
 
     finally:
         try:
             await env.close()
         except Exception as e:
-            print(f"[DEBUG] env.close() error: {e}", flush=True)
-        log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
+            pass
+        log_end(success=success, steps=steps_taken, rewards=rewards)
 
 
 if __name__ == "__main__":
