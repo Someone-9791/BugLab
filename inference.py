@@ -49,6 +49,9 @@ from openenv import GenericEnvClient
 
 # Environment variable configuration (MANDATORY)
 HF_TOKEN = os.getenv("HF_TOKEN")
+if HF_TOKEN is None:
+    raise ValueError("HF_TOKEN environment variable is required")
+
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://api.openai.com/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "gpt-3.5-turbo"
 TASK_NAME = os.getenv("EVAL_TASK", "fix_logic_bug")
@@ -57,11 +60,6 @@ ENV_URL = os.getenv("ENV_URL", "http://localhost:8000")
 MAX_STEPS = 3
 TEMPERATURE = 0.0
 MAX_TOKENS = 500
-SUCCESS_SCORE_THRESHOLD = 0.7
-
-# Max possible reward calculation
-_MAX_REWARD_PER_STEP = 1.0
-MAX_TOTAL_REWARD = MAX_STEPS * _MAX_REWARD_PER_STEP
 
 SYSTEM_PROMPT = textwrap.dedent(
     """
@@ -163,7 +161,7 @@ async def main() -> None:
             if done:
                 break
 
-        success = done
+        success = done and (max(rewards) > 0 if rewards else False)
 
     finally:
         try:
