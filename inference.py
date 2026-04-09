@@ -5,7 +5,7 @@ Tests the environment against easy, medium, and hard debugging tasks.
 
 MANDATORY REQUIREMENTS:
 - Uses OpenAI Client for all LLM calls
-- Reads from env vars: API_BASE_URL, MODEL_NAME, HF_TOKEN
+- Reads from env vars: API_BASE_URL, API_KEY, MODEL_NAME
 - Emits structured logs: [START], [STEP], [END]
 - Completes in < 20 minutes
 - Works on 2 vCPU, 8GB RAM
@@ -267,7 +267,7 @@ async def main_async():
     ]
     
     # Use the global OpenAI client initialized at module level
-    # (already has API_BASE_URL, MODEL_NAME, and HF_TOKEN from environment)
+    # (already has API_BASE_URL, MODEL_NAME, and API_KEY from environment)
     
     total_episodes = sum(count for _, count in EXPLICIT_TASKS)
     successful_episodes = 0
