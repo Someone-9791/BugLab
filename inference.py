@@ -77,7 +77,7 @@ def log_start(task: str, env: str, model: str) -> None:
 def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
     error_val = error if error else "null"
     done_val = str(done).lower()
-    action_safe = ''.join(c if c.isprintable() else ' ' for c in action).replace('\n', ' ').replace('\r', ' ')
+    action_safe = " ".join(action.split())
     print(
         f"[STEP] step={step} action={action_safe} reward={reward:.2f} done={done_val} error={error_val}",
         flush=True,
@@ -135,35 +135,40 @@ async def main() -> None:
 
     try:
         result = await env.reset(task_id=TASK_NAME)
-        obs = result.observation
+        obs = getattr(result, "observation", {})
         buggy_code = obs.get("buggy_code", "")
         description = obs.get("description", "")
 
         for step in range(1, MAX_STEPS + 1):
-            if result.done:
+            if getattr(result, "done", False):
                 break
 
             fixed_code = get_model_message(client, step, buggy_code, description)
 
             result = await env.step({"fixed_code": fixed_code})
-            obs = result.observation
 
-            reward = result.reward or 0.0
-            done = result.done
+            reward = float(getattr(result, "reward", 0.0) or 0.0)
+            done = bool(getattr(result, "done", False))
             error = getattr(result, "last_action_error", None)
 
             rewards.append(reward)
             steps_taken = step
+
+            obs = getattr(result, "observation", {})
             buggy_code = obs.get("buggy_code", "")
             description = obs.get("description", "")
 
             log_step(step=step, action=fixed_code, reward=reward, done=done, error=error)
 
+            if getattr(result, "success", None) is True:
+                success = True
+
             if done:
                 break
 
-        success = getattr(result, "success", done)
-
+    except Exception:
+        success = False
+        raise
     finally:
         try:
             await env.close()
