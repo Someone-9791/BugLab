@@ -5,7 +5,7 @@ MANDATORY
 - Before submitting, ensure the following variables are defined in your environment configuration:
     API_BASE_URL   The API endpoint for the LLM.
     MODEL_NAME     The model identifier to use for inference.
-    API_KEY        Your API key for the LLM proxy.
+    HF_TOKEN or API_KEY   Your Hugging Face token or API key (either one required).
 
 - Defaults are set only for API_BASE_URL and MODEL_NAME 
     (and should reflect your active inference setup):
@@ -48,7 +48,13 @@ from openai import OpenAI
 from openenv import GenericEnvClient
 
 # Environment variable configuration (MANDATORY)
-API_KEY = os.environ["API_KEY"]
+HF_TOKEN = os.environ.get("HF_TOKEN")
+API_KEY_ENV = os.environ.get("API_KEY")
+LLM_TOKEN = API_KEY_ENV or HF_TOKEN
+
+if not LLM_TOKEN:
+    raise ValueError("Either API_KEY or HF_TOKEN environment variable is required")
+
 API_BASE_URL = os.environ.get("API_BASE_URL") or "https://api.openai.com/v1"
 MODEL_NAME = os.environ.get("MODEL_NAME") or "gpt-3.5-turbo"
 TASK_NAME = os.environ.get("EVAL_TASK", "fix_logic_bug")
@@ -120,7 +126,7 @@ def get_model_message(client: OpenAI, step: int, buggy_code: str, description: s
 
 
 async def main() -> None:
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    client = OpenAI(base_url=API_BASE_URL, api_key=LLM_TOKEN)
 
     env = GenericEnvClient(ENV_URL)
 
