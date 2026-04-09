@@ -27,7 +27,10 @@ np.random.seed(42)
 
 # Initialize OpenAI client with environment variables - MUST BE DONE FIRST
 # The validator provides: API_BASE_URL, API_KEY (or HF_TOKEN), MODEL_NAME
-API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
+API_BASE_URL = os.environ.get("API_BASE_URL")
+if not API_BASE_URL:
+    raise ValueError("API_BASE_URL environment variable is required")
+
 MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
 
 # Read credential - validator may provide either API_KEY or HF_TOKEN
