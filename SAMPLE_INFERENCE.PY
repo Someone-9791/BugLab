@@ -1,11 +1,13 @@
 """
-Baseline Inference Script for BugLab
-=====================================
+Inference Script Example
+===================================
 MANDATORY
 - Before submitting, ensure the following variables are defined in your environment configuration:
     API_BASE_URL   The API endpoint for the LLM.
     MODEL_NAME     The model identifier to use for inference.
     HF_TOKEN       Your Hugging Face / API key.
+    LOCAL_IMAGE_NAME The name of the local image to use for the environment if you are using from_docker_image()
+                     method
 
 - Defaults are set only for API_BASE_URL and MODEL_NAME 
     (and should reflect your active inference setup):
@@ -30,13 +32,14 @@ STDOUT FORMAT
     - done and success are lowercase booleans: true or false.
     - error is the raw last_action_error string, or null if none.
     - All fields on a single line with no newlines within a line.
-    - Each task should return score in [0, 1]
+    - Each tasks should return score in [0, 1]
 
   Example:
-    [START] task=fix_logic_bug env=BugLab model=gpt-4.1-mini
-    [STEP] step=1 action=fix_attempt_1 reward=0.30 done=false error=null
-    [STEP] step=2 action=fix_attempt_2 reward=0.85 done=true error=null
-    [END] success=true steps=2 score=0.575 rewards=0.30,0.85
+    [START] task=click-test env=miniwob model=Qwen3-VL-30B
+    [STEP] step=1 action=click('123') reward=0.00 done=false error=null
+    [STEP] step=2 action=fill('456','text') reward=0.00 done=false error=null
+    [STEP] step=3 action=click('789') reward=1.00 done=true error=null
+    [END] success=true steps=3 score=1.00 rewards=0.00,0.00,1.00
 """
 
 import asyncio
@@ -45,29 +48,31 @@ import textwrap
 from typing import List, Optional
 
 from openai import OpenAI
-from openenv import GenericEnvClient
 
-# Environment variable configuration (MANDATORY)
+from my_env_v4 import MyEnvV4Action, MyEnvV4Env
+IMAGE_NAME = os.getenv("IMAGE_NAME") # If you are using docker image 
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
-API_BASE_URL = os.getenv("API_BASE_URL") or "https://api.openai.com/v1"
-MODEL_NAME = os.getenv("MODEL_NAME") or "gpt-3.5-turbo"
-TASK_NAME = os.getenv("EVAL_TASK", "fix_logic_bug")
-BENCHMARK = os.getenv("EVAL_BENCHMARK", "BugLab")
-ENV_URL = os.getenv("ENV_URL", "http://localhost:8000")
-MAX_STEPS = 3
-TEMPERATURE = 0.0
-MAX_TOKENS = 500
-SUCCESS_SCORE_THRESHOLD = 0.7
 
-# Max possible reward calculation
-_MAX_REWARD_PER_STEP = 1.0
+API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
+MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
+TASK_NAME = os.getenv("MY_ENV_V4_TASK", "echo")
+BENCHMARK = os.getenv("MY_ENV_V4_BENCHMARK", "my_env_v4")
+MAX_STEPS = 8
+TEMPERATURE = 0.7
+MAX_TOKENS = 150
+SUCCESS_SCORE_THRESHOLD = 0.1  # normalized score in [0, 1]
+
+# Max possible reward: each token contributes 0.1, across all steps
+_MAX_REWARD_PER_STEP = MAX_TOKENS * 0.1
 MAX_TOTAL_REWARD = MAX_STEPS * _MAX_REWARD_PER_STEP
 
 SYSTEM_PROMPT = textwrap.dedent(
     """
-    You are a Python code debugging expert. Your task is to fix buggy code.
-    Analyze the provided buggy code and description carefully.
-    Return ONLY the fixed Python code with the same function signature, no explanation.
+    You are interacting with a simple echo environment.
+    Each turn you must send a message. The environment will echo it back.
+    Reward is proportional to message length: reward = len(message) * 0.1
+    Your goal is to maximize total reward by sending meaningful, substantive messages.
+    Reply with exactly one message string — no quotes, no prefixes, just the message text.
     """
 ).strip()
 
@@ -87,25 +92,25 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
 
 def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
-    print(f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}", flush=True)
+    print(f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_str}", flush=True)
 
 
-def build_user_prompt(step: int, buggy_code: str, description: str) -> str:
+def build_user_prompt(step: int, last_echoed: str, last_reward: float, history: List[str]) -> str:
+    history_block = "\n".join(history[-4:]) if history else "None"
     return textwrap.dedent(
         f"""
         Step: {step}
-        Task: {description}
-        
-        Buggy code:
-        {buggy_code}
-        
-        Provide ONLY the fixed code, no explanation.
+        Last echoed message: {last_echoed!r}
+        Last reward: {last_reward:.2f}
+        Previous steps:
+        {history_block}
+        Send your next message.
         """
     ).strip()
 
 
-def get_model_message(client: OpenAI, step: int, buggy_code: str, description: str) -> str:
-    user_prompt = build_user_prompt(step, buggy_code, description)
+def get_model_message(client: OpenAI, step: int, last_echoed: str, last_reward: float, history: List[str]) -> str:
+    user_prompt = build_user_prompt(step, last_echoed, last_reward, history)
     try:
         completion = client.chat.completions.create(
             model=MODEL_NAME,
@@ -118,16 +123,16 @@ def get_model_message(client: OpenAI, step: int, buggy_code: str, description: s
             stream=False,
         )
         text = (completion.choices[0].message.content or "").strip()
-        return text if text else "pass"
+        return text if text else "hello"
     except Exception as exc:
         print(f"[DEBUG] Model request failed: {exc}", flush=True)
-        return "pass"
+        return "hello"
 
 
 async def main() -> None:
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
-    env = GenericEnvClient(ENV_URL)
+    env = await MyEnvV4Env.from_docker_image(IMAGE_NAME)
 
     history: List[str] = []
     rewards: List[float] = []
@@ -138,18 +143,17 @@ async def main() -> None:
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
     try:
-        result = await env.reset(task_id=TASK_NAME)
-        obs = result.observation
-        buggy_code = obs.get("buggy_code", "")
-        description = obs.get("description", "")
+        result = await env.reset() # OpenENV.reset()
+        last_echoed = result.observation.echoed_message
+        last_reward = 0.0
 
         for step in range(1, MAX_STEPS + 1):
             if result.done:
                 break
 
-            fixed_code = get_model_message(client, step, buggy_code, description)
+            message = get_model_message(client, step, last_echoed, last_reward, history)
 
-            result = await env.step({"fixed_code": fixed_code})
+            result = await env.step(MyEnvV4Action(message=message))
             obs = result.observation
 
             reward = result.reward or 0.0
@@ -158,12 +162,12 @@ async def main() -> None:
 
             rewards.append(reward)
             steps_taken = step
-            buggy_code = obs.get("buggy_code", "")
-            description = obs.get("description", "")
+            last_echoed = obs.echoed_message
+            last_reward = reward
 
-            log_step(step=step, action=fixed_code[:50], reward=reward, done=done, error=error)
+            log_step(step=step, action=message, reward=reward, done=done, error=error)
 
-            history.append(f"Step {step}: reward {reward:+.2f}")
+            history.append(f"Step {step}: {message!r} -> reward {reward:+.2f}")
 
             if done:
                 break
@@ -176,7 +180,7 @@ async def main() -> None:
         try:
             await env.close()
         except Exception as e:
-            print(f"[DEBUG] env.close() error: {e}", flush=True)
+            print(f"[DEBUG] env.close() error (container cleanup): {e}", flush=True)
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
 
 
