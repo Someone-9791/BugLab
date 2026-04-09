@@ -128,7 +128,6 @@ async def main() -> None:
 
     env = GenericEnvClient(ENV_URL)
 
-    history: List[str] = []
     rewards: List[float] = []
     steps_taken = 0
     success = False
@@ -152,7 +151,7 @@ async def main() -> None:
 
             reward = result.reward or 0.0
             done = result.done
-            error = None
+            error = getattr(result, "last_action_error", None)
 
             rewards.append(reward)
             steps_taken = step
@@ -161,12 +160,10 @@ async def main() -> None:
 
             log_step(step=step, action=fixed_code[:50], reward=reward, done=done, error=error)
 
-            history.append(f"Step {step}: reward {reward:+.2f}")
-
             if done:
                 break
 
-        success = sum(rewards) > 0 if rewards else False
+        success = done
 
     finally:
         try:
