@@ -158,11 +158,11 @@ async def main() -> None:
             buggy_code = obs.get("buggy_code", "")
             description = obs.get("description", "")
 
-            log_step(step=step, action=fixed_code, reward=reward, done=done, error=error)
+            log_step(step=step, action=f"fix_attempt_{step}", reward=reward, done=done, error=error)
 
             if getattr(result, "success", None) is True:
                 success = True
-
+            
             if done:
                 break
 
