@@ -26,15 +26,15 @@ random.seed(42)
 np.random.seed(42)
 
 # Initialize OpenAI client with environment variables - MUST BE DONE FIRST
-# The validator provides: API_BASE_URL, API_KEY, MODEL_NAME
-API_BASE_URL = os.environ["API_BASE_URL"]
-API_KEY = os.environ["API_KEY"]
+# The validator provides: API_BASE_URL, MODEL_NAME, HF_TOKEN
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4.1-mini")
+HF_TOKEN = os.environ["HF_TOKEN"]
 
 # Initialize client with exact parameters as validator expects
 client = OpenAI(
     base_url=API_BASE_URL,
-    api_key=API_KEY
+    api_key=HF_TOKEN
 )
 
 # Constants
@@ -237,50 +237,17 @@ def main():
 
 
 async def main_async():
-    """Run baseline inference episodes asynchronously."""
-    EXPLICIT_TASKS = [
-        ("fix_logic_bug", 2),
-        ("fix_algorithm_bug", 2),
-        ("optimize_and_fix", 1),
-    ]
+    """Run one baseline inference episode."""
+    # Run exactly ONE episode - validator expects single episode output
+    task_name = "fix_logic_bug"
     
-    # Use the global OpenAI client initialized at module level
-    # (already has API_BASE_URL, MODEL_NAME, and API_KEY from environment)
+    log_start(task_name, MODEL_NAME, BENCHMARK)
     
-    total_episodes = sum(count for _, count in EXPLICIT_TASKS)
-    successful_episodes = 0
-    all_rewards = []
-    
-    for task_name, count in EXPLICIT_TASKS:
-        for i in range(count):
-            episode_id = f"{task_name}_{i+1}"
-            log_start(episode_id, MODEL_NAME, BENCHMARK)
-            
-            try:
-                success, steps, rewards = await run_episode(client, ENV_URL, task_name)
-                if success:
-                    successful_episodes += 1
-                all_rewards.extend(rewards)
-                log_end(success, steps, rewards)
-            except Exception:
-                log_end(False, 1, [0.0])
-                all_rewards.append(0.0)
-    
-    if all_rewards:
-        avg_reward = sum(all_rewards) / len(all_rewards)
-    else:
-        avg_reward = 0.0
-    success_rate = successful_episodes / total_episodes if total_episodes > 0 else 0.0
-    
-    print(f"\n{'='*60}", file=sys.stderr)
-    print(f"Baseline Inference Results", file=sys.stderr)
-    print(f"{'='*60}", file=sys.stderr)
-    print(f"Model: {MODEL_NAME}", file=sys.stderr)
-    print(f"Episodes tested: {total_episodes}", file=sys.stderr)
-    print(f"Episodes successful: {successful_episodes}", file=sys.stderr)
-    print(f"Success rate: {success_rate:.1%}", file=sys.stderr)
-    print(f"Average reward: {avg_reward:.3f}", file=sys.stderr)
-    print(f"{'='*60}", file=sys.stderr)
+    try:
+        success, steps, rewards = await run_episode(client, ENV_URL, task_name)
+        log_end(success, steps, rewards)
+    except Exception:
+        log_end(False, 1, [0.0])
 
 
 if __name__ == "__main__":
