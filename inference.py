@@ -5,7 +5,7 @@ Tests the environment against easy, medium, and hard debugging tasks.
 
 MANDATORY REQUIREMENTS:
 - Uses OpenAI Client for all LLM calls
-- Reads from env vars: API_BASE_URL, API_KEY, MODEL_NAME
+- Reads from env vars: API_BASE_URL, MODEL_NAME, HF_TOKEN
 - Emits structured logs: [START], [STEP], [END]
 - Completes in < 20 minutes
 - Works on 2 vCPU, 8GB RAM
@@ -113,9 +113,10 @@ async def connect_with_retry(env_url: str, max_retries: int = 3, initial_delay: 
 async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool, int, list[float]]:
     """
     Run one episode against the environment.
+    Uses REAL environment only - no mock fallback.
     
     Args:
-        client: OpenAI client for LLM calls
+        client: OpenAI client for LLM calls (initialized with HF_TOKEN)
         env_url: Environment URL
         task_id: Task identifier (fix_logic_bug, fix_algorithm_bug, optimize_and_fix)
     
@@ -127,20 +128,10 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
     
     env = None
     try:
-        # Try to connect to environment, but make this optional for validator
-        try:
-            env = await connect_with_retry(env_url)
-            result = await env.reset(task_id=task_id)
-            obs = result.observation
-        except Exception:
-            # Environment unavailable - create mock observation to allow LLM calls
-            obs = {
-                "buggy_code": f"# Debug task: {task_id}",
-                "description": f"Fix the {task_id} debugging task",
-                "problem_id": task_id
-            }
-        
-        # Continue regardless of environment connection
+        # Connect to environment - MUST succeed (no mock fallback)
+        env = await connect_with_retry(env_url)
+        result = await env.reset(task_id=task_id)
+        obs = result.observation
         
         # Our environment gives random problems, so we use the actual problem_id
         actual_task = obs.get("problem_id")
@@ -154,6 +145,7 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
             prompt = create_prompt(obs.get("buggy_code"), obs.get("description"))
             
             try:
+                # Real LLM call with HF_TOKEN credential
                 response = client.chat.completions.create(
                     model=MODEL_NAME,
                     messages=[{"role": "user", "content": prompt}],
@@ -169,46 +161,37 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
                 elif "```" in fixed_code:
                     fixed_code = fixed_code.split("```")[1].split("```")[0].strip()
                 
-                # PRIORITY 1.3: Wrap step() call with timeout
-                if env:
-                    try:
-                        result = await asyncio.wait_for(
-                            env.step({"fixed_code": fixed_code}),
-                            timeout=30.0
-                        )
-                        obs = result.observation
-                        
-                        reward = obs.get("reward", 0.0)
-                        done = obs.get("done", False)
-                        rewards.append(reward)
-                        
-                        # Log the step
-                        log_step(step_count, f"fix_attempt_{step_count}", reward, done, None)
-                        
-                        # Check success (done=true means episode ended, could be due to excellent score)
-                        if done:
-                            success = reward >= SUCCESS_THRESHOLD
-                            await env.close()
-                            return success, step_count, rewards
-                        
-                    except asyncio.TimeoutError:
-                        # PRIORITY 1.3: Handle step timeout
-                        error_msg = "Step timeout (30s)"
-                        log_step(step_count, f"fix_attempt_{step_count}", 0.0, True, error_msg)
-                        rewards.append(0.0)
-                        await env.close()
-                        return False, step_count, rewards
-                else:
-                    # Environment not available - mock reward based on code quality
-                    reward = 0.7 if len(fixed_code) > 20 else 0.5
-                    done = step_count >= MAX_STEPS_PER_EPISODE
+                # Send fixed code to environment
+                try:
+                    result = await asyncio.wait_for(
+                        env.step({"fixed_code": fixed_code}),
+                        timeout=30.0
+                    )
+                    obs = result.observation
+                    
+                    reward = obs.get("reward", 0.0)
+                    done = obs.get("done", False)
                     rewards.append(reward)
+                    
+                    # Log the step
                     log_step(step_count, f"fix_attempt_{step_count}", reward, done, None)
+                    
+                    # Check success (done=true means episode ended)
                     if done:
-                        return reward >= SUCCESS_THRESHOLD, step_count, rewards
+                        success = reward >= SUCCESS_THRESHOLD
+                        await env.close()
+                        return success, step_count, rewards
+                    
+                except asyncio.TimeoutError:
+                    # Handle step timeout
+                    error_msg = "Step timeout (30s)"
+                    log_step(step_count, f"fix_attempt_{step_count}", 0.0, True, error_msg)
+                    rewards.append(0.0)
+                    await env.close()
+                    return False, step_count, rewards
                 
             except Exception as e:
-                error_msg = str(e)[:100]  # Truncate long errors
+                error_msg = str(e)[:100]
                 log_step(step_count, f"fix_attempt_{step_count}", 0.0, False, error_msg)
                 rewards.append(0.0)
                 await env.close()
