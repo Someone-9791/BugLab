@@ -3,9 +3,9 @@ Baseline Inference Script for BugLab
 =====================================
 MANDATORY
 - Before submitting, ensure the following variables are defined in your environment configuration:
-    API_BASE_URL   The API endpoint for the LLM.
+    API_BASE_URL   The API endpoint for the LLM (injected by validator).
     MODEL_NAME     The model identifier to use for inference.
-    HF_TOKEN or API_KEY   Your Hugging Face token or API key (either one required).
+    API_KEY        Your API key for the LLM proxy (injected by validator).
 
 - Defaults are set only for API_BASE_URL and MODEL_NAME 
     (and should reflect your active inference setup):
@@ -48,14 +48,14 @@ from openai import OpenAI
 from openenv import GenericEnvClient
 
 # Environment variable configuration (MANDATORY)
-HF_TOKEN = os.environ.get("HF_TOKEN")
-API_KEY_ENV = os.environ.get("API_KEY")
-LLM_TOKEN = API_KEY_ENV or HF_TOKEN
+API_KEY = os.environ.get("API_KEY")
+if not API_KEY:
+    raise ValueError("API_KEY environment variable is required (injected by validator)")
 
-if not LLM_TOKEN:
-    raise ValueError("Either API_KEY or HF_TOKEN environment variable is required")
+API_BASE_URL = os.environ.get("API_BASE_URL")
+if not API_BASE_URL:
+    raise ValueError("API_BASE_URL environment variable is required (injected by validator)")
 
-API_BASE_URL = os.environ.get("API_BASE_URL") or "https://api.openai.com/v1"
 MODEL_NAME = os.environ.get("MODEL_NAME") or "gpt-3.5-turbo"
 TASK_NAME = os.environ.get("EVAL_TASK", "fix_logic_bug")
 BENCHMARK = os.environ.get("EVAL_BENCHMARK", "BugLab")
@@ -126,7 +126,7 @@ def get_model_message(client: OpenAI, step: int, buggy_code: str, description: s
 
 
 async def main() -> None:
-    client = OpenAI(base_url=API_BASE_URL, api_key=LLM_TOKEN)
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
     env = GenericEnvClient(ENV_URL)
 
