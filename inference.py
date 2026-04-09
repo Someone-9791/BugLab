@@ -161,7 +161,7 @@ async def main() -> None:
             if done:
                 break
 
-        success = done and (max(rewards) > 0 if rewards else False)
+        success = getattr(result, "success", done)
 
     finally:
         try:
