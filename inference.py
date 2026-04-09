@@ -118,7 +118,7 @@ def get_model_message(client: OpenAI, step: int, buggy_code: str, description: s
         )
         text = (completion.choices[0].message.content or "").strip()
         return text if text else "pass"
-    except Exception as exc:
+    except Exception:
         return "pass"
 
 
@@ -157,17 +157,17 @@ async def main() -> None:
             buggy_code = obs.get("buggy_code", "")
             description = obs.get("description", "")
 
-            log_step(step=step, action=fixed_code[:50], reward=reward, done=done, error=error)
+            log_step(step=step, action=fixed_code, reward=reward, done=done, error=error)
 
             if done:
                 break
 
-        success = getattr(result, "success", False)
+        success = getattr(result, "success", done)
 
     finally:
         try:
             await env.close()
-        except Exception as e:
+        except Exception:
             pass
         log_end(success=success, steps=steps_taken, rewards=rewards)
 
