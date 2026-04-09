@@ -26,18 +26,10 @@ random.seed(42)
 np.random.seed(42)
 
 # Initialize OpenAI client with environment variables - MUST BE DONE FIRST
-# The validator provides: API_BASE_URL, API_KEY (or HF_TOKEN), MODEL_NAME
-API_BASE_URL = os.environ.get("API_BASE_URL")
-if not API_BASE_URL:
-    raise ValueError("API_BASE_URL environment variable is required")
-
-MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
-
-# Read credential - validator may provide either API_KEY or HF_TOKEN
-# Try API_KEY first (validator's actual injection), fall back to HF_TOKEN
-API_KEY = os.environ.get("API_KEY") or os.environ.get("HF_TOKEN")
-if not API_KEY:
-    raise ValueError("Either API_KEY or HF_TOKEN environment variable is required")
+# The validator provides: API_BASE_URL, API_KEY, MODEL_NAME
+API_BASE_URL = os.environ["API_BASE_URL"]
+API_KEY = os.environ["API_KEY"]
+MODEL_NAME = os.getenv("MODEL_NAME", "gpt-4.1-mini")
 
 # Initialize client with exact parameters as validator expects
 client = OpenAI(
@@ -240,29 +232,7 @@ async def run_episode(client: OpenAI, env_url: str, task_id: str) -> tuple[bool,
 
 
 def main():
-    """Entry point - run inference with already-initialized OpenAI client."""
-    # Client already initialized at module level with validator's credentials
-    print(f"[START] task=api_test env=BugLab model={MODEL_NAME}", flush=True)
-    
-    # Make guaranteed API call to prove proxy routing works
-    try:
-        response = client.chat.completions.create(
-            model=MODEL_NAME,
-            messages=[{"role": "user", "content": "test"}],
-            temperature=0.0,
-            max_tokens=5,
-            timeout=30.0,
-        )
-        print(f"[STEP] step=1 action=api_test reward=1.00 done=true error=null", flush=True)
-        print(f"[END] success=true steps=1 rewards=1.00", flush=True)
-    except Exception as e:
-        # CRITICAL: Still log the attempt even if it fails
-        # Validator should see the HTTP request to their proxy
-        error_msg = str(e)[:50].replace('\n', ' ')
-        print(f"[STEP] step=1 action=api_test reward=0.00 done=true error={error_msg}", flush=True)
-        print(f"[END] success=false steps=1 rewards=0.00", flush=True)
-    
-    # Run baseline inference episodes
+    """Entry point - run baseline inference episodes."""
     asyncio.run(main_async())
 
 
