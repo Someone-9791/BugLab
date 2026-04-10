@@ -357,6 +357,16 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
         return {"tasks": tasks_list, "total": len(tasks_list)}
     
     @property
+    def tasks(self) -> dict:
+        """
+        Get all available tasks.
+        
+        Returns:
+            dict: Dictionary of TASKS keyed by task_id
+        """
+        return TASKS
+    
+    @property
     def state(self) -> DebugState:
         """
         Get current episode state metadata.
