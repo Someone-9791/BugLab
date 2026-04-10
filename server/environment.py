@@ -337,6 +337,25 @@ class PythonDebugEnvironment(Environment[DebugAction, DebugObservation, DebugSta
         
         return next_obs
     
+    def enumerate_tasks(self) -> dict:
+        """
+        Enumerate all available tasks with their graders.
+        
+        Returns:
+            dict: Dictionary with 'tasks' list and 'total' count
+        """
+        tasks_list = []
+        for task_id, task_config in TASKS.items():
+            tasks_list.append({
+                "id": task_config.get("id"),
+                "name": task_config.get("name"),
+                "description": task_config.get("description"),
+                "difficulty_range": task_config.get("difficulty_range"),
+                "grader": task_config.get("grader"),
+                "num_problems": len(task_config.get("problem_ids", []))
+            })
+        return {"tasks": tasks_list, "total": len(tasks_list)}
+    
     @property
     def state(self) -> DebugState:
         """
