@@ -18,15 +18,15 @@ tasks:
   - id: "fix_logic_bug"
     name: "Fix Logic Bugs"
     description: "Identify and correct logical errors in control flow (if/else, loops, conditionals)"
-    grader: "test_logic_fix"
+    grader: "server.grader:test_logic_fix"
   - id: "fix_algorithm_bug"
     name: "Fix Algorithm Bugs"
     description: "Correct algorithmic errors in data processing and computation"
-    grader: "test_algorithm_fix"
+    grader: "server.grader:test_algorithm_fix"
   - id: "optimize_and_fix"
     name: "Optimize Code and Fix"
     description: "Improve code efficiency, readability, and style while maintaining correctness"
-    grader: "test_optimization"
+    grader: "server.grader:test_optimization"
 
 requirements:
   - openenv-core>=0.2.0
