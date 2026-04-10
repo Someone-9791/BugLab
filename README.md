@@ -230,7 +230,7 @@ BugLab/
 
 ## Team
 
-**Team Name:** Team Not Found
+**Team Name:** Team "Not Found"
 
 | Role | Name |
 |------|------|

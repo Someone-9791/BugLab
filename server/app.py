@@ -133,7 +133,7 @@ async def root():
             <li><a href="https://huggingface.co/spaces/Someone5249/BugLab" target="_blank">HuggingFace Space</a></li>
         </ul>
         
-        <h2>👥 Team Not Found</h2>
+        <h2>👥 Team "Not Found"</h2>
         <ul>
             <li>Pranatpal Sharma - Main Developer</li>
             <li>Shloka Chourasiya - Team Leader</li>
