@@ -56,7 +56,7 @@ except (ImportError, SystemError):
     USE_LOCAL_ENV = False
 
 # Environment variable configuration (MANDATORY)
-# Per documentation: HF_TOKEN is the official required variable
+# Per documentation: HF_TOKEN is the official required variable (no default)
 HF_TOKEN = os.environ.get("HF_TOKEN")
 API_KEY = os.environ.get("API_KEY")  # Also accept API_KEY as alternative
 LLM_TOKEN = HF_TOKEN or API_KEY
@@ -64,11 +64,13 @@ LLM_TOKEN = HF_TOKEN or API_KEY
 if not LLM_TOKEN:
     raise ValueError("Either HF_TOKEN or API_KEY environment variable is required")
 
-API_BASE_URL = os.environ.get("API_BASE_URL")
-if not API_BASE_URL:
-    raise ValueError("API_BASE_URL environment variable is required")
+# API_BASE_URL and MODEL_NAME have defaults, but can be overridden via environment
+API_BASE_URL = os.environ.get("API_BASE_URL", "https://api.openai.com/v1")
+MODEL_NAME = os.environ.get("MODEL_NAME", "gpt-3.5-turbo")
 
-MODEL_NAME = os.environ.get("MODEL_NAME") or "gpt-3.5-turbo"
+# Optional: LOCAL_IMAGE_NAME when using from_docker_image()
+LOCAL_IMAGE_NAME = os.environ.get("LOCAL_IMAGE_NAME")
+
 TASK_NAME = os.environ.get("EVAL_TASK", "fix_logic_bug")
 BENCHMARK = os.environ.get("EVAL_BENCHMARK", "BugLab")
 ENV_URL = os.environ.get("ENV_URL", "http://localhost:8000")
