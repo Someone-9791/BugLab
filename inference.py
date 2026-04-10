@@ -140,6 +140,10 @@ def get_model_message(client: OpenAI, step: int, buggy_code: str, description: s
 
 
 async def main() -> None:
+    """
+    Run baseline inference on ALL 3 TASKS.
+    This ensures validator can verify that all 3 graders are working.
+    """
     client = OpenAI(base_url=API_BASE_URL, api_key=LLM_TOKEN)
 
     # Use local or network environment based on availability
@@ -148,71 +152,97 @@ async def main() -> None:
     else:
         env = GenericEnvClient(ENV_URL)
 
-    rewards: List[float] = []
-    steps_taken = 0
-    success = False
-
-    log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
+    # All 3 tasks to validate
+    TASKS_TO_RUN = ["fix_logic_bug", "fix_algorithm_bug", "optimize_and_fix"]
+    
+    all_task_results = []
 
     try:
-        # For local environment, reset() is synchronous; for network, it's async
-        if USE_LOCAL_ENV:
-            result = env.reset(task_id=TASK_NAME)
-        else:
-            result = await env.reset(task_id=TASK_NAME)
-        
-        obs = getattr(result, "observation", {})
-        buggy_code = obs.get("buggy_code", "")
-        description = obs.get("description", "")
+        for task_id in TASKS_TO_RUN:
+            rewards: List[float] = []
+            steps_taken = 0
+            success = False
 
-        for step in range(1, MAX_STEPS + 1):
-            if getattr(result, "done", False):
-                break
+            log_start(task=task_id, env=BENCHMARK, model=MODEL_NAME)
 
-            fixed_code = get_model_message(client, step, buggy_code, description)
+            try:
+                # For local environment, reset() is synchronous; for network, it's async
+                if USE_LOCAL_ENV:
+                    result = env.reset(task_id=task_id)
+                else:
+                    result = await env.reset(task_id=task_id)
+                
+                obs = getattr(result, "observation", {})
+                buggy_code = obs.get("buggy_code", "")
+                description = obs.get("description", "")
 
-            # Create and execute action appropriately based on environment type
-            if USE_LOCAL_ENV:
-                action = DebugAction(fixed_code=fixed_code)
-                result = env.step(action)
-            else:
-                action = {"fixed_code": fixed_code}
-                result = await env.step(action)
+                for step in range(1, MAX_STEPS + 1):
+                    if getattr(result, "done", False):
+                        break
 
-            reward = float(getattr(result, "reward", 0.0) or 0.0)
-            done = bool(getattr(result, "done", False))
-            error = getattr(result, "last_action_error", None)
+                    fixed_code = get_model_message(client, step, buggy_code, description)
 
-            rewards.append(reward)
-            steps_taken = step
+                    # Create and execute action appropriately based on environment type
+                    if USE_LOCAL_ENV:
+                        action = DebugAction(fixed_code=fixed_code)
+                        result = env.step(action)
+                    else:
+                        action = {"fixed_code": fixed_code}
+                        result = await env.step(action)
 
-            obs = getattr(result, "observation", {})
-            buggy_code = obs.get("buggy_code", "")
-            description = obs.get("description", "")
+                    reward = float(getattr(result, "reward", 0.0) or 0.0)
+                    done = bool(getattr(result, "done", False))
+                    error = getattr(result, "last_action_error", None)
 
-            log_step(step=step, action=fixed_code, reward=reward, done=done, error=error)
+                    rewards.append(reward)
+                    steps_taken = step
 
-            if getattr(result, "success", None) is True:
-                success = True
-            
-            if done:
-                break
+                    obs = getattr(result, "observation", {})
+                    buggy_code = obs.get("buggy_code", "")
+                    description = obs.get("description", "")
 
-    except OSError as e:
-        success = False
-        raise ValueError(f"Environment at {ENV_URL} is not reachable: {str(e)}") from e
-    except Exception:
-        success = False
-        raise
+                    log_step(step=step, action=fixed_code, reward=reward, done=done, error=error)
+
+                    if getattr(result, "success", None) is True:
+                        success = True
+                    
+                    if done:
+                        break
+
+            except OSError as e:
+                success = False
+                raise ValueError(f"Environment at {ENV_URL} is not reachable: {str(e)}") from e
+            except Exception:
+                success = False
+                raise
+            finally:
+                # Calculate episode score (average of all rewards)
+                episode_score = sum(rewards) / len(rewards) if rewards else 0.0
+                episode_score = min(max(episode_score, 0.0), 1.0)  # Clamp to [0, 1]
+                log_end(success=success, steps=steps_taken, score=episode_score, rewards=rewards)
+                
+                all_task_results.append({
+                    "task": task_id,
+                    "score": episode_score,
+                    "success": success,
+                    "steps": steps_taken
+                })
+
     finally:
         try:
-            await env.close()
+            if USE_LOCAL_ENV:
+                pass  # Local env doesn't have close()
+            else:
+                await env.close()
         except Exception:
             pass
-        # Calculate episode score (average of all rewards)
-        episode_score = sum(rewards) / len(rewards) if rewards else 0.0
-        episode_score = min(max(episode_score, 0.0), 1.0)  # Clamp to [0, 1]
-        log_end(success=success, steps=steps_taken, score=episode_score, rewards=rewards)
+        
+        # Summary: print aggregate results for validator
+        if all_task_results:
+            print("[SUMMARY] Task Validation Results:", flush=True)
+            for result in all_task_results:
+                print(f"  {result['task']}: score={result['score']:.2f}, success={result['success']}", flush=True)
+
 
 
 if __name__ == "__main__":
