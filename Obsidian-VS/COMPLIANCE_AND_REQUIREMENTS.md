@@ -68,15 +68,27 @@
 
 **Status**: Both fixes verified working in production
 
-### Session 9: Task Discovery Enhancement
+### Session 9: Task Discovery Enhancements
 
-**Enhancement: Task Enumeration Method**
-- **Issue**: Validator might not discover tasks without dedicated method on Environment class
+**Enhancement 1: Task Enumeration Method**
+- **Issue**: Validator might not discover tasks without dedicated method
 - **Solution**: Added `enumerate_tasks()` method to PythonDebugEnvironment
-- **Implementation**: Returns dict with list of all tasks and grader references
-- **Location**: server/environment.py (new method added after reset/step methods)
-- **Format**: Returns {"tasks": [...], "total": 3} with full task metadata
-- **Status**: ✅ Verified working locally and in Docker
+- **Status**: ✅ Returns all 3 tasks with graders, verified in Docker
+
+**Enhancement 2: Tasks Property**
+- **Issue**: External validators might access tasks via property instead of method
+- **Solution**: Added `tasks` property to return TASKS dictionary directly
+- **Status**: ✅ Allows env.tasks access, exposes all tasks
+
+**Verification Summary**
+- ✅ enumerate_tasks() method works locally and in Docker
+- ✅ tasks property accessible and returns correct data
+- ✅ /tasks endpoint returns 3 tasks with grader references
+- ✅ All graders import and execute successfully
+- ✅ Graders return valid scores [0.0, 1.0]
+- ✅ Docker image builds successfully
+- ✅ All 10 consecutive test runs passed
+- ✅ All code changes committed to GitHub
 
 ---
 
