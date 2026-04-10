@@ -151,7 +151,11 @@ async def main() -> None:
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
     try:
-        result = await env.reset(task_id=TASK_NAME)
+        # For local environment, reset() is synchronous; for network, it's async
+        if USE_LOCAL_ENV:
+            result = env.reset(task_id=TASK_NAME)
+        else:
+            result = await env.reset(task_id=TASK_NAME)
         obs = getattr(result, "observation", {})
         buggy_code = obs.get("buggy_code", "")
         description = obs.get("description", "")
@@ -162,13 +166,13 @@ async def main() -> None:
 
             fixed_code = get_model_message(client, step, buggy_code, description)
 
-            # Create action appropriately based on environment type
+            # Create and execute action appropriately based on environment type
             if USE_LOCAL_ENV:
                 action = DebugAction(fixed_code=fixed_code)
+                result = env.step(action)
             else:
                 action = {"fixed_code": fixed_code}
-            
-            result = await env.step(action)
+                result = await env.step(action)
 
             reward = float(getattr(result, "reward", 0.0) or 0.0)
             done = bool(getattr(result, "done", False))
@@ -281,7 +285,12 @@ async def main() -> None:
     log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME)
 
     try:
-        result = await env.reset(task_id=TASK_NAME)
+        # For local environment, reset() is synchronous; for network, it's async
+        if USE_LOCAL_ENV:
+            result = env.reset(task_id=TASK_NAME)
+        else:
+            result = await env.reset(task_id=TASK_NAME)
+        
         obs = getattr(result, "observation", {})
         buggy_code = obs.get("buggy_code", "")
         description = obs.get("description", "")
@@ -295,10 +304,10 @@ async def main() -> None:
             # Create action appropriately based on environment type
             if USE_LOCAL_ENV:
                 action = DebugAction(fixed_code=fixed_code)
+                result = env.step(action)
             else:
                 action = {"fixed_code": fixed_code}
-            
-            result = await env.step(action)
+                result = await env.step(action)
 
             reward = float(getattr(result, "reward", 0.0) or 0.0)
             done = bool(getattr(result, "done", False))
