@@ -80,15 +80,22 @@
 - **Solution**: Added `tasks` property to return TASKS dictionary directly
 - **Status**: ✅ Allows env.tasks access, exposes all tasks
 
-**Verification Summary**
-- ✅ enumerate_tasks() method works locally and in Docker
-- ✅ tasks property accessible and returns correct data
-- ✅ /tasks endpoint returns 3 tasks with grader references
-- ✅ All graders import and execute successfully
-- ✅ Graders return valid scores [0.0, 1.0]
-- ✅ Docker image builds successfully
-- ✅ All 10 consecutive test runs passed
-- ✅ All code changes committed to GitHub
+### Session 10: CRITICAL - All 3 Tasks in inference.py (ROOT CAUSE FIX)
+
+**Root Cause Discovery**: Validator needs to see evidence that ALL 3 GRADERS work!
+- **Issue**: inference.py only ran ONE task (TASK_NAME="fix_logic_bug")
+- **Validator requirement**: "run each grader, verify scores/reward in 0.0–1.0 range"
+- **Root cause**: If only 1 task runs, only 1 grader is called → validator sees 1/3 graders
+- **Error message decoding**: "Not enough tasks with graders" = validator couldn't verify all 3 graders
+
+**SOLUTION**: Modified inference.py to run ALL 3 TASKS
+- Now loops through: fix_logic_bug → fix_algorithm_bug → optimize_and_fix
+- Each task runs full step loop independently
+- Emits 3 separate [START]/[END] blocks (one per task)
+- Prints [SUMMARY] confirming all 3 graders executed
+- **Result**: Validator sees evidence of all 3 graders working with valid scores
+
+**Status**: ✅ Tested locally - all 3 tasks run successfully with different scores
 
 ---
 
