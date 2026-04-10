@@ -57,11 +57,11 @@ TASKS = {
         "description": "Identify and correct logical errors in control flow (if/else, loops, conditionals)",
         "difficulty_range": ["easy", "medium"],
         "problem_ids": [
-            "logic_001", "logic_002", "logic_003", "logic_004",  # logic_error category
-            "off_by_one_001", "off_by_one_002", "off_by_one_003", "off_by_one_004",  # off_by_one category
-            "edge_001", "edge_002"  # missing_edge_case category (easier ones)
+            "logic_001", "logic_002", "logic_003", "logic_004",
+            "off_by_one_001", "off_by_one_002", "off_by_one_003", "off_by_one_004",
+            "edge_001", "edge_002"
         ],
-        "grader": "test_logic_fix",
+        "grader": "server.grader:test_logic_fix",
         "reward_weight": 0.33
     },
     "fix_algorithm_bug": {
@@ -70,12 +70,12 @@ TASKS = {
         "description": "Correct algorithmic errors in data processing and computation",
         "difficulty_range": ["medium", "hard"],
         "problem_ids": [
-            "type_001", "type_002", "type_003", "type_004",  # type_error category
-            "loop_001", "loop_002", "loop_003", "loop_004",  # loop_error category
-            "shadow_001", "shadow_002",  # variable shadowing
-            "return_001"  # wrong_return category (easier ones)
+            "type_001", "type_002", "type_003", "type_004",
+            "loop_001", "loop_002", "loop_003", "loop_004",
+            "shadow_001", "shadow_002",
+            "return_001"
         ],
-        "grader": "test_algorithm_fix",
+        "grader": "server.grader:test_algorithm_fix",
         "reward_weight": 0.33
     },
     "optimize_and_fix": {
@@ -84,12 +84,12 @@ TASKS = {
         "description": "Improve code efficiency, readability, and style while maintaining correctness",
         "difficulty_range": ["hard"],
         "problem_ids": [
-            "edge_003", "edge_004",  # harder edge cases
-            "recursion_001", "recursion_002", "recursion_003",  # recursion_error category (challenging)
-            "shadow_003",  # variable shadowing
-            "return_002", "return_003", "return_004"  # wrong_return (harder cases)
+            "edge_003", "edge_004",
+            "recursion_001", "recursion_002", "recursion_003",
+            "shadow_003",
+            "return_002", "return_003", "return_004"
         ],
-        "grader": "test_optimization",
+        "grader": "server.grader:test_optimization",
         "reward_weight": 0.34
     }
 }
