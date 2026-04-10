@@ -38,6 +38,24 @@ async def validation_exception_handler(request, exc):
         }
     )
 
+# Add tasks enumeration endpoint for validator
+@app.get("/tasks")
+async def list_tasks():
+    """List all available tasks with graders."""
+    from server.environment import TASKS
+    tasks_info = []
+    for task_id, task_config in TASKS.items():
+        tasks_info.append({
+            "id": task_config.get("id"),
+            "name": task_config.get("name"),
+            "description": task_config.get("description"),
+            "difficulty_range": task_config.get("difficulty_range"),
+            "grader": task_config.get("grader"),
+            "num_problems": len(task_config.get("problem_ids", []))
+        })
+    return {"tasks": tasks_info, "total": len(tasks_info)}
+
+
 # Add root endpoint for HuggingFace Spaces compatibility
 @app.get("/")
 async def root():
