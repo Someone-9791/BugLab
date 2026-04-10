@@ -56,6 +56,31 @@ async def list_tasks():
     return {"tasks": tasks_info, "total": len(tasks_info)}
 
 
+# Add graders endpoint to expose available grader functions
+@app.get("/graders")
+async def list_graders():
+    """List all available grader functions."""
+    from server.grader import test_logic_fix, test_algorithm_fix, test_optimization
+    graders = {
+        "test_logic_fix": {
+            "name": "Logic Fix Grader",
+            "description": "Grades fix_logic_bug task submissions",
+            "callable": True
+        },
+        "test_algorithm_fix": {
+            "name": "Algorithm Fix Grader",
+            "description": "Grades fix_algorithm_bug task submissions",
+            "callable": True
+        },
+        "test_optimization": {
+            "name": "Optimization Grader",
+            "description": "Grades optimize_and_fix task submissions",
+            "callable": True
+        }
+    }
+    return {"graders": graders, "total": len(graders)}
+
+
 # Add root endpoint for HuggingFace Spaces compatibility
 @app.get("/")
 async def root():

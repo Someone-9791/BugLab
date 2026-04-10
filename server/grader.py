@@ -569,3 +569,24 @@ def compute_reward(test_score: float, llm_score: float = None) -> float:
     # in the environment. The formula now uses static analysis instead of LLM.
     # Return test_score only - quality is handled in environment.step()
     return test_score
+
+
+def test_logic_fix(code: str, test_cases: list[dict]) -> float:
+    """Grader for fix_logic_bug task - tests logical error fixes."""
+    score, _ = run_tests_sandboxed(code, test_cases, timeout_s=5.0, detailed=True)
+    quality = analyze_code_quality(code)
+    return 0.7 * score + 0.3 * quality
+
+
+def test_algorithm_fix(code: str, test_cases: list[dict]) -> float:
+    """Grader for fix_algorithm_bug task - tests algorithmic error fixes."""
+    score, _ = run_tests_sandboxed(code, test_cases, timeout_s=5.0, detailed=True)
+    quality = analyze_code_quality(code)
+    return 0.7 * score + 0.3 * quality
+
+
+def test_optimization(code: str, test_cases: list[dict]) -> float:
+    """Grader for optimize_and_fix task - tests code optimization and correctness."""
+    score, _ = run_tests_sandboxed(code, test_cases, timeout_s=5.0, detailed=True)
+    quality = analyze_code_quality(code)
+    return 0.7 * score + 0.3 * quality
