@@ -1,4 +1,5 @@
----
+
+---
 title: BugLab
 emoji: 🐛
 colorFrom: indigo
@@ -133,32 +134,18 @@ Evaluated with **Qwen/Qwen2.5-72B-Instruct** (temperature=0.0, deterministic):
 
 ## Advanced Features (Competitive Advantages)
 
-### Intelligent Hint System
-Agents receive category-specific hints when they fail, helping them learn faster:
-- Logic errors → "Check comparison operators (>, <, >=, <=, ==, !=)"
-- Off-by-one errors → "Check loop ranges and boundary conditions"
-- Type errors → "Check type conversions - do you need str(), int(), float()?"
-- And 4 more categories...
-
 ### Partial Credit Scoring
-Instead of all-or-nothing, agents get rewarded for partial progress:
-- 3/5 tests passing → 0.42 reward (not 0.0)
-- Incremental improvements are encouraged
-- Partial credit + quality score = fair evaluation
+Agents earn rewards for progressive improvement, not just all-or-nothing success. Passing 3/5 tests yields reward proportional to progress.
 
-### Enhanced Error Feedback
-Detailed observation includes:
-- Which specific tests failed (test number, input, expected vs. actual)
-- Error messages from failed tests
-- Count of passed vs. failed tests
-- Suggestions for common mistakes
+### Intelligent Feedback
+- Category-specific hints guide debugging strategy
+- Detailed error messages show failed tests, expected vs. actual output
+- Rich observation includes pass/fail counts and suggestions
 
-### Robust Error Handling
-Production-ready reliability:
-- Malformed requests return 400 error with hints (not 500 crash)
-- Step timeout protection (30s) prevents hanging
-- Connection retry logic with exponential backoff
-- Thread-safe for concurrent agent requests
+### Production-Ready Reliability
+- Timeout protection (30s) prevents hanging
+- Concurrent-safe request handling
+- Graceful error handling with 400-level responses
 
 ---
 
@@ -188,43 +175,29 @@ curl -X GET http://localhost:8000/state
 ```
 BugLab/
 ├── server/              # FastAPI backend
-│   ├── app.py          # API endpoints
-│   ├── environment.py   # OpenEnv implementation
-│   └── grader.py        # Deterministic grading engine
-├── models.py            # Type definitions (Pydantic)
-├── bug_bank.py          # 30+ debugging problems
-├── inference.py         # Baseline agent script
-├── openenv.yaml         # OpenEnv spec (validated)
-├── Dockerfile           # Container config
-├── requirements.txt     # Dependencies
-└── Obsidian-VS/         # Technical documentation
+│   ├── app.py           # REST API endpoints (/reset, /step, /state)
+│   ├── environment.py    # OpenEnv implementation
+│   └── grader.py         # Deterministic grading engine
+├── models.py             # Type definitions (Pydantic)
+├── bug_bank.py           # 30+ debugging problems
+├── inference.py          # Baseline agent evaluation script
+├── openenv.yaml          # OpenEnv specification
+├── Dockerfile            # Docker container config
+├── requirements.txt      # Python dependencies
+└── ARCHITECTURE.md       # Detailed technical documentation
 ```
 
 ---
 
 ## Compliance & Standards
 
-✅ **OpenEnv Specification**
-- Typed models (Pydantic)
-- Full API: `reset()`, `step()`, `state()`
-- Validated with `openenv validate`
+✅ **OpenEnv Compliant** — Full specification implemented (reset, step, state, type validation)
 
-✅ **Hackathon Requirements**
-- Real-world debugging task
-- 3 tasks with difficulty progression
-- Deterministic reward (0.0-1.0)
-- Reproducible baseline script
-- Docker deployment ready
+✅ **Deterministic & Reproducible** — No randomness in grading; baseline achieves 67.8% average reward
 
-✅ **Code Quality**
-- Type hints throughout
-- Clean API design
-- Well-documented (Obsidian vault)
-- Security sandboxing
-- **Thread-safe for concurrent agents**
-- **Robust error handling** (no crashes, always responsive)
-- **Connection retry logic** with exponential backoff
-- **Request timeout protection** (prevents hanging)
+✅ **Production Ready** — Handles concurrent requests, 30s timeout protection, graceful error responses
+
+✅ **Live Deployment** — Running on HuggingFace Spaces with Docker containerization
 
 ---
 
@@ -234,8 +207,8 @@ BugLab/
 
 | Role | Name |
 |------|------|
-| 👨‍💻 **Main Developer** | Pranatpal Sharma |
-| 👩‍💼 **Team Leader** | Shloka Chourasiya |
+| 👨‍💻 **Main Developer**  | Pranatpal Sharma |
+| 👩‍💼 **Team Leader**     | Shloka Chourasiya |
 | 🎨 **UI/UX Developer** | Vedant Sharma |
 
 ---
@@ -250,4 +223,9 @@ See [LICENSE](LICENSE) for details. For security issues, see [SECURITY.md](SECUR
 
 ---
 
-**Questions?** Check the [technical documentation](Obsidian-VS/) or open an issue.
+## Documentation
+
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — Complete technical reference (systems, APIs, task definitions)
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — Contribution guidelines
+- **[LICENSE](LICENSE)** — MIT license
+
