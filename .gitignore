@@ -61,7 +61,6 @@ temp/
 # Obsidian
 .obsidian/
 Obsidian-VS/
-Obsidian-VS/
 
 # Large files (documentation PDFs are large, consider hosting separately)
 # *.pdf
