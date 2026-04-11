@@ -26,25 +26,25 @@ Enable AI agents to learn debugging strategies through deterministic, reproducib
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  OpenEnv Interface (Agent Interface)                 │
-│  - reset() → Initial observation                     │
+│  OpenEnv Interface (Agent Interface)                │
+│  - reset() → Initial observation                    │
 │  - step(action) → Observation + reward + done       │
 │  - state() → Current episode state                  │
 └──────────────────┬──────────────────────────────────┘
                    │
         ┌──────────┴──────────┐
         │                     │
-┌───────▼──────────┐  ┌──────▼─────────────┐
-│ Environment      │  │ Grading System     │
-│ (PythonDebug     │  │ (Dual Scoring)     │
-│  Environment)    │  │ - 70% test score   │
-│                  │  │ - 30% quality      │
-│ - reset()        │  │                    │
-│ - step()         │  │ 3 Graders:         │
-│ - state          │  │ 1. Logic Fix       │
-│ - 30 problems    │  │ 2. Algorithm Fix   │
-│ - 3 tasks        │  │ 3. Optimization    │
-└────────────────┘  └────────────────────┘
+┌───────▼────────┐  ┌──────▼────────────┐
+│ Environment    │  │ Grading System    │
+│ (PythonDebug   │  │ (Dual Scoring)    │
+│  Environment)  │  │ - 70% test score  │
+│                │  │ - 30% quality     │
+│ - reset()      │  │                   │
+│ - step()       │  │ 3 Graders:        │
+│ - state        │  │ 1. Logic Fix      │
+│ - 30 problems  │  │ 2. Algorithm Fix  │
+│ - 3 tasks      │  │ 3. Optimization   │
+└────────────────┘  └───────────────────┘
         ▲                   ▲
         │                   │
         └─────────┬─────────┘

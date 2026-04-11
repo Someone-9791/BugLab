@@ -25,46 +25,46 @@ BugLab is a **real-world reinforcement learning environment** where AI agents le
 ### System Components
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     BugLab Environment                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
+┌────────────────────────────────────────────────────────────┐
+│                     BugLab Environment                     │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │ 1. Problem Bank (bug_bank.py)                       │  │
-│  │    - 30+ debugging problems                         │  │
-│  │    - Categorized: logic, algorithm, optimization   │  │
-│  │    - Each with test cases and metadata             │  │
+│  │ 1. Problem Bank (bug_bank.py)                        │  │
+│  │    - 30+ debugging problems                          │  │
+│  │    - Categorized: logic, algorithm, optimization     │  │
+│  │    - Each with test cases and metadata               │  │
 │  └──────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
+│                           ↓                                │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │ 2. Environment (server/environment.py)              │  │
-│  │    - reset() → Select problem, return observation  │  │
-│  │    - step(action) → Grade code, compute reward     │  │
-│  │    - state → Track episode state                   │  │
+│  │ 2. Environment (server/environment.py)               │  │
+│  │    - reset() → Select problem, return observation    │  │
+│  │    - step(action) → Grade code, compute reward       │  │
+│  │    - state → Track episode state                     │  │
 │  └──────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
+│                           ↓                                │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │ 3. Grading System (server/grader.py)                │  │
-│  │    - Run test cases in sandbox                      │  │
-│  │    - Analyze code quality (AST)                     │  │
-│  │    - Compute normalized rewards [0.0, 1.0]         │  │
+│  │ 3. Grading System (server/grader.py)                 │  │
+│  │    - Run test cases in sandbox                       │  │
+│  │    - Analyze code quality (AST)                      │  │
+│  │    - Compute normalized rewards [0.0, 1.0]           │  │
 │  └──────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
+│                           ↓                                │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │ 4. API Server (server/app.py)                       │  │
-│  │    - FastAPI application                           │  │
-│  │    - /reset, /step, /state endpoints               │  │
-│  │    - Async request handling                        │  │
+│  │ 4. API Server (server/app.py)                        │  │
+│  │    - FastAPI application                             │  │
+│  │    - /reset, /step, /state endpoints                 │  │
+│  │    - Async request handling                          │  │
 │  └──────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
+│                           ↓                                │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │ 5. Type System (models.py)                          │  │
-│  │    - DebugAction (fixed_code)                       │  │
-│  │    - DebugObservation (problem + reward)            │  │
-│  │    - DebugState (episode tracking)                  │  │
+│  │ 5. Type System (models.py)                           │  │
+│  │    - DebugAction (fixed_code)                        │  │
+│  │    - DebugObservation (problem + reward)             │  │
+│  │    - DebugState (episode tracking)                   │  │
 │  └──────────────────────────────────────────────────────┘  │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+│                                                            │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ---

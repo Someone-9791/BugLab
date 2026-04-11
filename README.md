@@ -121,14 +121,15 @@ where test_score = passed_tests / total_tests  (rewards partial progress)
 
 Evaluated with **Qwen/Qwen2.5-72B-Instruct** (temperature=0.0, deterministic):
 
-| Metric | Result |
-|--------|--------|
-| Overall Reward | 0.678 |
-| Success Rate | 40% |
-| Easy Tasks | 83.0% |
-| Medium Tasks | 64.2% |
-| Hard Tasks | 44.5% |
-| Runtime | < 5 minutes (2 vCPU, 8GB RAM) |
+--------------------------------------------------
+| Metric         | Result                        |
+|----------------|-------------------------------|
+| Overall Reward | 0.678                         |
+| Success Rate   | 40%                           |
+| Easy Tasks     | 83.0%                         |
+| Medium Tasks   | 64.2%                         |
+| Hard Tasks     | 44.5%                         |
+| Runtime        | < 5 minutes (2 vCPU, 8GB RAM) |
 
 ---
 
@@ -208,8 +209,8 @@ BugLab/
 | Role | Name |
 |------|------|
 | 👨‍💻 **Main Developer**  | Pranatpal Sharma |
-| 👩‍💼 **Team Leader**     | Shloka Chourasiya |
-| 🎨 **UI/UX Developer** | Vedant Sharma |
+| 👩‍💼 **Team Leader**     | Shloka Chourasia |
+| 🎨 **UI/UX Developer** | Vedant Sharma    |
 
 ---
 
